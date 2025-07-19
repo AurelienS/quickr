@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  quickr:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - quickr_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  quickr_data:
+    driver: local
