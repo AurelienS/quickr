@@ -1,0 +1,128 @@
+package handlers
+
+import (
+	"net/http"
+	"net/url"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+	"quickr/models"
+)
+
+type CreateLinkRequest struct {
+	Alias       string `json:"alias" binding:"required"`
+	URL         string `json:"url" binding:"required"`
+	CreatorName string `json:"creator_name" binding:"required"`
+}
+
+type UpdateLinkRequest struct {
+	URL         string `json:"url" binding:"required"`
+	CreatorName string `json:"creator_name" binding:"required"`
+}
+
+// Validation helper
+func validateURL(urlStr string) bool {
+	u, err := url.Parse(urlStr)
+	return err == nil && (u.Scheme == "http" || u.Scheme == "https")
+}
+
+// GET /api/links
+func ListLinks(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var links []models.Link
+		result := db.Find(&links)
+		if result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch links"})
+			return
+		}
+		c.JSON(http.StatusOK, links)
+	}
+}
+
+// POST /api/links
+func CreateLink(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req CreateLinkRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+			return
+		}
+
+		// Validate URL
+		if !validateURL(req.URL) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid URL format"})
+			return
+		}
+
+		// Check for duplicate alias
+		var existing models.Link
+		if err := db.Where("alias = ?", req.Alias).First(&existing).Error; err == nil {
+			c.JSON(http.StatusConflict, gin.H{"error": "Alias already exists"})
+			return
+		}
+
+		link := models.Link{
+			Alias:       req.Alias,
+			URL:         req.URL,
+			CreatorName: req.CreatorName,
+		}
+
+		if err := db.Create(&link).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create link"})
+			return
+		}
+
+		c.JSON(http.StatusCreated, link)
+	}
+}
+
+// PUT /api/links/:id
+func UpdateLink(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req UpdateLinkRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+			return
+		}
+
+		// Validate URL
+		if !validateURL(req.URL) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid URL format"})
+			return
+		}
+
+		var link models.Link
+		if err := db.First(&link, c.Param("id")).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Link not found"})
+			return
+		}
+
+		link.URL = req.URL
+		link.CreatorName = req.CreatorName
+
+		if err := db.Save(&link).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update link"})
+			return
+		}
+
+		c.JSON(http.StatusOK, link)
+	}
+}
+
+// DELETE /api/links/:id
+func DeleteLink(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var link models.Link
+		if err := db.First(&link, c.Param("id")).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Link not found"})
+			return
+		}
+
+		if err := db.Delete(&link).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete link"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Link deleted successfully"})
+	}
+}

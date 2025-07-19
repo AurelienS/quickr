@@ -29,6 +29,15 @@ func main() {
 	// Redirect route
 	r.GET("/go/:alias", handlers.HandleRedirect(db))
 
+	// API routes
+	api := r.Group("/api")
+	{
+		api.GET("/links", handlers.ListLinks(db))
+		api.POST("/links", handlers.CreateLink(db))
+		api.PUT("/links/:id", handlers.UpdateLink(db))
+		api.DELETE("/links/:id", handlers.DeleteLink(db))
+	}
+
 	// Start server
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal("Failed to start server:", err)
