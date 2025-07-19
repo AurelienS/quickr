@@ -60,7 +60,7 @@ func CreateLink(db *gorm.DB) gin.HandlerFunc {
 				return
 			}
 
-			// Check for duplicate alias
+			// Check for duplicate alias (only among non-deleted links)
 			var existing models.Link
 			if err := db.Where("alias = ?", alias).First(&existing).Error; err == nil {
 				c.String(http.StatusConflict, "Alias already exists")
@@ -96,7 +96,7 @@ func CreateLink(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Check for duplicate alias
+		// Check for duplicate alias (only among non-deleted links)
 		var existing models.Link
 		if err := db.Where("alias = ?", req.Alias).First(&existing).Error; err == nil {
 			c.JSON(http.StatusConflict, gin.H{"error": "Alias already exists"})
@@ -163,7 +163,7 @@ func UpdateLink(db *gorm.DB) gin.HandlerFunc {
 
 		// Check which field is being updated
 		if alias := c.PostForm("alias"); alias != "" {
-			// Check for duplicate alias
+			// Check for duplicate alias (only among non-deleted links)
 			var existing models.Link
 			if err := db.Where("alias = ? AND id != ?", alias, id).First(&existing).Error; err == nil {
 				c.String(http.StatusConflict, "Alias already exists")
