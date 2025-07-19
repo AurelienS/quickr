@@ -59,18 +59,22 @@
                                         {{ range .recent }}
                                         <tr>
                                             <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-indigo-600 sm:pl-0">
-                                                <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
-                                            </td>
-                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                                 <div class="flex items-center gap-2">
-                                                    <span class="truncate max-w-md">{{ .URL }}</span>
-                                                    <a href="{{ .URL }}" target="_blank" class="text-gray-400 hover:text-gray-600 shrink-0">
-                                                        <svg class="inline-block h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                                    <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
+                                                    <button type="button"
+                                                        class="text-gray-400 hover:text-gray-600 copy-button"
+                                                        data-url="{{ .Alias }}"
+                                                        title="Copier le lien">
+                                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                                                         </svg>
-                                                    </a>
+                                                    </button>
+                                                    <div class="copy-notification hidden fixed bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg text-sm">
+                                                        Lien copié !
+                                                    </div>
                                                 </div>
                                             </td>
+                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ .URL }}</td>
                                             <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ .Clicks }}</td>
                                             <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ .CreatorName }}</td>
                                         </tr>
@@ -93,7 +97,20 @@
                                         <div class="flex items-center space-x-4">
                                             <div class="min-w-0 flex-1">
                                                 <p class="truncate text-sm font-medium text-indigo-600">
-                                                    <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
+                                                    <div class="flex items-center gap-2">
+                                                        <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
+                                                        <button type="button"
+                                                            class="text-gray-400 hover:text-gray-600 copy-button"
+                                                            data-url="{{ .Alias }}"
+                                                            title="Copier le lien">
+                                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                                            </svg>
+                                                        </button>
+                                                        <div class="copy-notification hidden fixed bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg text-sm">
+                                                            Lien copié !
+                                                        </div>
+                                                    </div>
                                                 </p>
                                                 <p class="truncate text-sm text-gray-500">{{ .URL }}</p>
                                             </div>
@@ -117,7 +134,20 @@
                                         <div class="flex items-center space-x-4">
                                             <div class="min-w-0 flex-1">
                                                 <p class="truncate text-sm font-medium text-indigo-600">
-                                                    <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
+                                                    <div class="flex items-center gap-2">
+                                                        <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
+                                                        <button type="button"
+                                                            class="text-gray-400 hover:text-gray-600 copy-button"
+                                                            data-url="{{ .Alias }}"
+                                                            title="Copier le lien">
+                                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                                            </svg>
+                                                        </button>
+                                                        <div class="copy-notification hidden fixed bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg text-sm">
+                                                            Lien copié !
+                                                        </div>
+                                                    </div>
                                                 </p>
                                                 <p class="truncate text-sm text-gray-500">{{ .URL }}</p>
                                             </div>
@@ -141,7 +171,20 @@
                                         <div class="flex items-center space-x-4">
                                             <div class="min-w-0 flex-1">
                                                 <p class="truncate text-sm font-medium text-indigo-600">
-                                                    <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
+                                                    <div class="flex items-center gap-2">
+                                                        <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
+                                                        <button type="button"
+                                                            class="text-gray-400 hover:text-gray-600 copy-button"
+                                                            data-url="{{ .Alias }}"
+                                                            title="Copier le lien">
+                                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                                            </svg>
+                                                        </button>
+                                                        <div class="copy-notification hidden fixed bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg text-sm">
+                                                            Lien copié !
+                                                        </div>
+                                                    </div>
                                                 </p>
                                                 <p class="truncate text-sm text-gray-500">{{ .URL }}</p>
                                             </div>
@@ -159,5 +202,32 @@
             </div>
         </main>
     </div>
+    <script>
+    // Copy link functionality
+    document.addEventListener('click', function(evt) {
+        if (evt.target.closest('.copy-button')) {
+            const button = evt.target.closest('.copy-button');
+            const alias = button.dataset.url;
+            const url = window.location.origin + '/go/' + alias;
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(url).then(() => {
+                // Show notification
+                const notification = button.parentElement.querySelector('.copy-notification');
+                const buttonRect = button.getBoundingClientRect();
+
+                // Position notification above the button
+                notification.style.top = (buttonRect.top - 40) + 'px';
+                notification.style.left = (buttonRect.left - 30) + 'px';
+                notification.classList.remove('hidden');
+
+                // Hide after 2 seconds
+                setTimeout(() => {
+                    notification.classList.add('hidden');
+                }, 2000);
+            });
+        }
+    });
+    </script>
 </body>
 </html>
