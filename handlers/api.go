@@ -78,8 +78,8 @@ func CreateLink(db *gorm.DB) gin.HandlerFunc {
 				return
 			}
 
-			// Return the new link row HTML
-			c.HTML(http.StatusCreated, "link_row", link)
+			// Return just the new row HTML
+			c.HTML(http.StatusCreated, "link_row.html", link)
 			return
 		}
 
