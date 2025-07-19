@@ -235,3 +235,32 @@ func DeleteLink(db *gorm.DB) gin.HandlerFunc {
 		c.JSON(http.StatusOK, gin.H{"message": "Link deleted successfully"})
 	}
 }
+
+// GET /api/search
+func SearchLinks(db *gorm.DB) gin.HandlerFunc {
+    return func(c *gin.Context) {
+        query := c.Query("q")
+        if query == "" {
+            // If no query, return all links
+            var links []models.Link
+            db.Order("created_at desc").Find(&links)
+            // Use the same template as the main list
+            for i := range links {
+                c.HTML(http.StatusOK, "link_row.html", links[i])
+            }
+            return
+        }
+
+        // Search only in alias and url
+        var links []models.Link
+        searchQuery := "%" + query + "%"
+        db.Where("alias LIKE ? OR url LIKE ?", searchQuery, searchQuery).
+            Order("created_at desc").
+            Find(&links)
+
+        // Use the same template as the main list
+        for i := range links {
+            c.HTML(http.StatusOK, "link_row.html", links[i])
+        }
+    }
+}

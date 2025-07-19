@@ -45,6 +45,25 @@
                             <h1 class="text-2xl font-semibold text-gray-900">Links</h1>
                             <p class="mt-2 text-sm text-gray-700">A list of all shortened links in the system.</p>
                         </div>
+                        <div class="mt-4 sm:mt-0">
+                            <div class="relative">
+                                <input type="search"
+                                    name="q"
+                                    class="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                    placeholder="Search links..."
+                                    hx-get="/api/search"
+                                    hx-trigger="keyup changed delay:300ms, search"
+                                    hx-target="#links-table tbody"
+                                    hx-swap="innerHTML"
+                                    hx-indicator="#search-indicator">
+                                <div id="search-indicator" class="htmx-indicator absolute inset-y-0 right-0 flex items-center pr-3">
+                                    <svg class="animate-spin h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Create Link Form -->
@@ -110,6 +129,13 @@
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-gray-200 bg-white">
+                                            <template id="no-results">
+                                                <tr>
+                                                    <td colspan="6" class="px-3 py-4 text-sm text-gray-500 text-center">
+                                                        No links found matching your search.
+                                                    </td>
+                                                </tr>
+                                            </template>
                                             {{ range .links }}
                                             <tr id="link-{{ .ID }}">
                                                 <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-indigo-600 sm:pl-6" data-id="{{ .ID }}" data-field="alias">
@@ -303,6 +329,17 @@
     document.body.addEventListener('htmx:afterRequest', function(evt) {
         if (evt.detail.successful && evt.detail.pathInfo.requestPath.startsWith('/api/links/') && evt.detail.pathInfo.method === 'DELETE') {
             hideDeleteModal();
+        }
+    });
+
+    // Handle empty search results
+    document.body.addEventListener('htmx:afterOnLoad', function(evt) {
+        if (evt.target.id === 'links-table') {
+            const tbody = evt.target.querySelector('tbody');
+            if (!tbody.hasChildNodes() || (tbody.childNodes.length === 1 && tbody.childNodes[0].nodeType === Node.TEXT_NODE)) {
+                const template = document.getElementById('no-results');
+                tbody.innerHTML = template.innerHTML;
+            }
         }
     });
     </script>

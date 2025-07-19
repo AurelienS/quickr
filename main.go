@@ -57,6 +57,7 @@ func main() {
 		api.GET("/links/:id/edit", handlers.GetLinkEditField(db))
 		api.PUT("/links/:id", handlers.UpdateLink(db))
 		api.DELETE("/links/:id", handlers.DeleteLink(db))
+		api.GET("/search", handlers.SearchLinks(db))
 	}
 
 	log.Printf("Server starting on http://localhost:8080")
