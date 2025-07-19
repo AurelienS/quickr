@@ -42,6 +42,7 @@ func main() {
 	// Web routes
 	r.GET("/", handlers.HandleHome(db))
 	r.GET("/stats", handlers.HandleStats(db))
+	r.GET("/hot", handlers.HandleHot(db))
 
 	// Redirect route with debug handler
 	r.GET("/go/:alias", func(c *gin.Context) {

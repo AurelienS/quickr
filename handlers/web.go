@@ -3,6 +3,7 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -63,4 +64,43 @@ func HandleStats(db *gorm.DB) gin.HandlerFunc {
 			"recentLinks": recentLinks,
 		})
 	}
+}
+
+// GET /hot
+func HandleHot(db *gorm.DB) gin.HandlerFunc {
+    return func(c *gin.Context) {
+        // Get recently added links (last 24h)
+        var recent []models.Link
+        db.Where("created_at > ?", time.Now().Add(-24*time.Hour)).
+            Order("created_at desc").
+            Find(&recent)
+
+        // Get top links for last 7 days
+        var top7d []models.Link
+        db.Where("created_at > ?", time.Now().Add(-7*24*time.Hour)).
+            Order("clicks desc").
+            Limit(20).
+            Find(&top7d)
+
+        // Get top links for last 30 days
+        var top30d []models.Link
+        db.Where("created_at > ?", time.Now().Add(-30*24*time.Hour)).
+            Order("clicks desc").
+            Limit(20).
+            Find(&top30d)
+
+        // Get top links all time
+        var topAll []models.Link
+        db.Order("clicks desc").
+            Limit(20).
+            Find(&topAll)
+
+        c.HTML(http.StatusOK, "hot.html", gin.H{
+            "active":  "hot",
+            "recent":  recent,
+            "top7d":   top7d,
+            "top30d":  top30d,
+            "topAll":  topAll,
+        })
+    }
 }
