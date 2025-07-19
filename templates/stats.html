@@ -102,16 +102,16 @@
                                 <thead class="bg-gray-50 dark:bg-dark-surface">
                                     <tr>
                                         <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-white sm:pl-6">Alias</th>
-                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">URL</th>
-                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Clicks</th>
-                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Creator</th>
+                                        <th scope="col" class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">URL</th>
+                                        <th scope="col" class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Clicks</th>
+                                        <th scope="col" class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Creator</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-200 bg-white dark:bg-dark-surface dark:divide-dark-border">
                                     {{ range .topLinks }}
                                     <tr>
                                         <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-indigo-600 dark:text-dark-primary sm:pl-6">
-                                            <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-3">
                                                 <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
                                                 <button type="button"
                                                     class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 copy-button"
@@ -125,10 +125,18 @@
                                                     Lien copié !
                                                 </div>
                                             </div>
+                                            <!-- Mobile view details -->
+                                            <div class="sm:hidden mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                <div class="truncate">{{ .URL }}</div>
+                                                <div class="flex justify-between mt-1">
+                                                    <span>{{ .Clicks }} clicks</span>
+                                                    <span>{{ .CreatorName }}</span>
+                                                </div>
+                                            </div>
                                         </td>
-                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">{{ .URL }}</td>
-                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">{{ .Clicks }}</td>
-                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">{{ .CreatorName }}</td>
+                                        <td class="hidden sm:table-cell whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">{{ .URL }}</td>
+                                        <td class="hidden sm:table-cell whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">{{ .Clicks }}</td>
+                                        <td class="hidden sm:table-cell whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">{{ .CreatorName }}</td>
                                     </tr>
                                     {{ end }}
                                 </tbody>
@@ -144,15 +152,15 @@
                                 <thead class="bg-gray-50 dark:bg-dark-surface">
                                     <tr>
                                         <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-white sm:pl-6">Alias</th>
-                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Created</th>
-                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Creator</th>
+                                        <th scope="col" class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Created</th>
+                                        <th scope="col" class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Creator</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-200 bg-white dark:bg-dark-surface dark:divide-dark-border">
                                     {{ range .recentLinks }}
                                     <tr>
                                         <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-indigo-600 dark:text-dark-primary sm:pl-6">
-                                            <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-3">
                                                 <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
                                                 <button type="button"
                                                     class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 copy-button"
@@ -166,9 +174,16 @@
                                                     Lien copié !
                                                 </div>
                                             </div>
+                                            <!-- Mobile view details -->
+                                            <div class="sm:hidden mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                <div class="flex justify-between">
+                                                    <span>{{ .CreatedAt.Format "2006-01-02 15:04" }}</span>
+                                                    <span>{{ .CreatorName }}</span>
+                                                </div>
+                                            </div>
                                         </td>
-                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">{{ .CreatedAt.Format "2006-01-02 15:04" }}</td>
-                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">{{ .CreatorName }}</td>
+                                        <td class="hidden sm:table-cell whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">{{ .CreatedAt.Format "2006-01-02 15:04" }}</td>
+                                        <td class="hidden sm:table-cell whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">{{ .CreatorName }}</td>
                                     </tr>
                                     {{ end }}
                                 </tbody>

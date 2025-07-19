@@ -79,9 +79,9 @@
                                     <thead class="bg-white dark:bg-dark-surface">
                                         <tr>
                                             <th scope="col" class="py-3.5 pl-6 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Alias</th>
-                                            <th scope="col" class="px-6 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">URL</th>
-                                            <th scope="col" class="px-6 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Clicks</th>
-                                            <th scope="col" class="px-6 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Creator</th>
+                                            <th scope="col" class="hidden sm:table-cell px-6 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">URL</th>
+                                            <th scope="col" class="hidden sm:table-cell px-6 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Clicks</th>
+                                            <th scope="col" class="hidden sm:table-cell px-6 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Creator</th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-gray-200 bg-white dark:bg-dark-surface dark:divide-dark-border">
@@ -102,10 +102,18 @@
                                                         Lien copié !
                                                     </div>
                                                 </div>
+                                                <!-- Mobile view details -->
+                                                <div class="sm:hidden mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                    <div class="truncate">{{ .URL }}</div>
+                                                    <div class="flex justify-between mt-1">
+                                                        <span>{{ .Clicks }} clicks</span>
+                                                        <span>{{ .CreatorName }}</span>
+                                                    </div>
+                                                </div>
                                             </td>
-                                            <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ .URL }}</td>
-                                            <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ .Clicks }}</td>
-                                            <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ .CreatorName }}</td>
+                                            <td class="hidden sm:table-cell whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ .URL }}</td>
+                                            <td class="hidden sm:table-cell whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ .Clicks }}</td>
+                                            <td class="hidden sm:table-cell whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ .CreatorName }}</td>
                                         </tr>
                                         {{ end }}
                                     </tbody>
@@ -125,26 +133,24 @@
                                     <li class="py-4">
                                         <div class="flex items-center space-x-4">
                                             <div class="min-w-0 flex-1">
-                                                <p class="truncate text-sm font-medium text-indigo-600 dark:text-dark-primary">
-                                                    <div class="flex items-center gap-3">
-                                                        <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
-                                                        <button type="button"
-                                                            class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 copy-button"
-                                                            data-url="{{ .Alias }}"
-                                                            title="Copier le lien">
-                                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                                                            </svg>
-                                                        </button>
-                                                        <div class="copy-notification hidden fixed bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg text-sm dark:bg-gray-700">
-                                                            Lien copié !
-                                                        </div>
+                                                <div class="flex items-center gap-3">
+                                                    <a href="/go/{{ .Alias }}" target="_blank" class="text-indigo-600 dark:text-dark-primary font-medium">{{ .Alias }}</a>
+                                                    <button type="button"
+                                                        class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 copy-button"
+                                                        data-url="{{ .Alias }}"
+                                                        title="Copier le lien">
+                                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                                        </svg>
+                                                    </button>
+                                                    <div class="copy-notification hidden fixed bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg text-sm dark:bg-gray-700">
+                                                        Lien copié !
                                                     </div>
-                                                </p>
-                                                <p class="truncate text-sm text-gray-500 dark:text-gray-400">{{ .URL }}</p>
-                                            </div>
-                                            <div class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                                {{ .Clicks }} clicks
+                                                </div>
+                                                <p class="truncate text-sm text-gray-500 dark:text-gray-400 mt-1">{{ .URL }}</p>
+                                                <div class="flex justify-between items-center mt-1">
+                                                    <span class="text-sm text-gray-500 dark:text-gray-400">{{ .Clicks }} clicks</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </li>
@@ -162,26 +168,24 @@
                                     <li class="py-4">
                                         <div class="flex items-center space-x-4">
                                             <div class="min-w-0 flex-1">
-                                                <p class="truncate text-sm font-medium text-indigo-600 dark:text-dark-primary">
-                                                    <div class="flex items-center gap-3">
-                                                        <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
-                                                        <button type="button"
-                                                            class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 copy-button"
-                                                            data-url="{{ .Alias }}"
-                                                            title="Copier le lien">
-                                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                                                            </svg>
-                                                        </button>
-                                                        <div class="copy-notification hidden fixed bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg text-sm dark:bg-gray-700">
-                                                            Lien copié !
-                                                        </div>
+                                                <div class="flex items-center gap-3">
+                                                    <a href="/go/{{ .Alias }}" target="_blank" class="text-indigo-600 dark:text-dark-primary font-medium">{{ .Alias }}</a>
+                                                    <button type="button"
+                                                        class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 copy-button"
+                                                        data-url="{{ .Alias }}"
+                                                        title="Copier le lien">
+                                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                                        </svg>
+                                                    </button>
+                                                    <div class="copy-notification hidden fixed bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg text-sm dark:bg-gray-700">
+                                                        Lien copié !
                                                     </div>
-                                                </p>
-                                                <p class="truncate text-sm text-gray-500 dark:text-gray-400">{{ .URL }}</p>
-                                            </div>
-                                            <div class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                                {{ .Clicks }} clicks
+                                                </div>
+                                                <p class="truncate text-sm text-gray-500 dark:text-gray-400 mt-1">{{ .URL }}</p>
+                                                <div class="flex justify-between items-center mt-1">
+                                                    <span class="text-sm text-gray-500 dark:text-gray-400">{{ .Clicks }} clicks</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </li>
@@ -199,26 +203,24 @@
                                     <li class="py-4">
                                         <div class="flex items-center space-x-4">
                                             <div class="min-w-0 flex-1">
-                                                <p class="truncate text-sm font-medium text-indigo-600 dark:text-dark-primary">
-                                                    <div class="flex items-center gap-3">
-                                                        <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
-                                                        <button type="button"
-                                                            class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 copy-button"
-                                                            data-url="{{ .Alias }}"
-                                                            title="Copier le lien">
-                                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                                                            </svg>
-                                                        </button>
-                                                        <div class="copy-notification hidden fixed bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg text-sm dark:bg-gray-700">
-                                                            Lien copié !
-                                                        </div>
+                                                <div class="flex items-center gap-3">
+                                                    <a href="/go/{{ .Alias }}" target="_blank" class="text-indigo-600 dark:text-dark-primary font-medium">{{ .Alias }}</a>
+                                                    <button type="button"
+                                                        class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 copy-button"
+                                                        data-url="{{ .Alias }}"
+                                                        title="Copier le lien">
+                                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                                        </svg>
+                                                    </button>
+                                                    <div class="copy-notification hidden fixed bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg text-sm dark:bg-gray-700">
+                                                        Lien copié !
                                                     </div>
-                                                </p>
-                                                <p class="truncate text-sm text-gray-500 dark:text-gray-400">{{ .URL }}</p>
-                                            </div>
-                                            <div class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                                {{ .Clicks }} clicks
+                                                </div>
+                                                <p class="truncate text-sm text-gray-500 dark:text-gray-400 mt-1">{{ .URL }}</p>
+                                                <div class="flex justify-between items-center mt-1">
+                                                    <span class="text-sm text-gray-500 dark:text-gray-400">{{ .Clicks }} clicks</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </li>
