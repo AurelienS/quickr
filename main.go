@@ -26,6 +26,14 @@ func main() {
 	// Setup Gin router
 	r := gin.Default()
 
+	// Load HTML templates
+	r.LoadHTMLGlob("templates/*.html")
+	log.Println("Templates loaded from templates/*.html")
+
+	// Web routes
+	r.GET("/", handlers.HandleHome(db))
+	r.GET("/stats", handlers.HandleStats(db))
+
 	// Redirect route
 	r.GET("/go/:alias", handlers.HandleRedirect(db))
 
@@ -38,6 +46,7 @@ func main() {
 		api.DELETE("/links/:id", handlers.DeleteLink(db))
 	}
 
+	log.Printf("Server starting on http://localhost:8080")
 	// Start server
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal("Failed to start server:", err)
