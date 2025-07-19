@@ -1,86 +1,127 @@
-{{ define "content" }}
-<div class="px-4 sm:px-6 lg:px-8">
-    <div class="sm:flex sm:items-center">
-        <div class="sm:flex-auto">
-            <h1 class="text-2xl font-semibold text-gray-900">Statistics</h1>
-            <p class="mt-2 text-sm text-gray-700">Overview of system usage and top links.</p>
-        </div>
-    </div>
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .title }} - Quickr</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        .htmx-indicator { opacity: 0; transition: opacity 200ms ease-in; }
+        .htmx-request .htmx-indicator { opacity: 1; }
+        .htmx-request.htmx-indicator { opacity: 1; }
+    </style>
+</head>
+<body class="h-full">
+    <div class="min-h-full">
+        <!-- Navigation -->
+        <nav class="bg-white shadow">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 justify-between">
+                    <div class="flex">
+                        <div class="flex flex-shrink-0 items-center">
+                            <a href="/" class="text-2xl font-bold text-indigo-600">Quickr</a>
+                        </div>
+                        <div class="ml-6 flex space-x-8">
+                            <a href="/" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "home" }}border-indigo-500 text-gray-900{{ else }}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{{ end }}">
+                                Home
+                            </a>
+                            <a href="/stats" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "stats" }}border-indigo-500 text-gray-900{{ else }}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{{ end }}">
+                                Stats
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
 
-    <!-- Stats Overview -->
-    <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
-        <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-            <dt class="truncate text-sm font-medium text-gray-500">Total Links</dt>
-            <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ .totalLinks }}</dd>
-        </div>
-        <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-            <dt class="truncate text-sm font-medium text-gray-500">Total Clicks</dt>
-            <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ .totalClicks }}</dd>
-        </div>
-        <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
-            <dt class="truncate text-sm font-medium text-gray-500">Active Users</dt>
-            <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ .activeUsers }}</dd>
-        </div>
-    </div>
+        <!-- Main content -->
+        <main>
+            <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+                <div class="px-4 sm:px-6 lg:px-8">
+                    <div class="sm:flex sm:items-center">
+                        <div class="sm:flex-auto">
+                            <h1 class="text-2xl font-semibold text-gray-900">Statistics</h1>
+                            <p class="mt-2 text-sm text-gray-700">Overview of system usage and top links.</p>
+                        </div>
+                    </div>
 
-    <!-- Top Links -->
-    <div class="mt-8">
-        <h2 class="text-lg font-medium text-gray-900">Top Links</h2>
-        <div class="mt-4 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
-            <table class="min-w-full divide-y divide-gray-300">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Alias</th>
-                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">URL</th>
-                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Clicks</th>
-                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Creator</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 bg-white">
-                    {{ range .topLinks }}
-                    <tr>
-                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-indigo-600 sm:pl-6">
-                            <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
-                        </td>
-                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                            <a href="{{ .URL }}" class="text-gray-600 hover:text-gray-900" target="_blank">{{ .URL }}</a>
-                        </td>
-                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ .Clicks }}</td>
-                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ .CreatorName }}</td>
-                    </tr>
-                    {{ end }}
-                </tbody>
-            </table>
-        </div>
-    </div>
+                    <!-- Stats Overview -->
+                    <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
+                        <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                            <dt class="truncate text-sm font-medium text-gray-500">Total Links</dt>
+                            <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ .totalLinks }}</dd>
+                        </div>
+                        <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                            <dt class="truncate text-sm font-medium text-gray-500">Total Clicks</dt>
+                            <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ .totalClicks }}</dd>
+                        </div>
+                        <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                            <dt class="truncate text-sm font-medium text-gray-500">Active Users</dt>
+                            <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ .activeUsers }}</dd>
+                        </div>
+                    </div>
 
-    <!-- Recent Activity -->
-    <div class="mt-8">
-        <h2 class="text-lg font-medium text-gray-900">Recent Activity</h2>
-        <div class="mt-4 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
-            <table class="min-w-full divide-y divide-gray-300">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Alias</th>
-                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Created</th>
-                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Creator</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 bg-white">
-                    {{ range .recentLinks }}
-                    <tr>
-                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-indigo-600 sm:pl-6">
-                            <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
-                        </td>
-                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ .CreatedAt.Format "2006-01-02 15:04" }}</td>
-                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ .CreatorName }}</td>
-                    </tr>
-                    {{ end }}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-{{ end }}
+                    <!-- Top Links -->
+                    <div class="mt-8">
+                        <h2 class="text-lg font-medium text-gray-900">Top Links</h2>
+                        <div class="mt-4 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+                            <table class="min-w-full divide-y divide-gray-300">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Alias</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">URL</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Clicks</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Creator</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200 bg-white">
+                                    {{ range .topLinks }}
+                                    <tr>
+                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-indigo-600 sm:pl-6">
+                                            <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                            <a href="{{ .URL }}" class="text-gray-600 hover:text-gray-900" target="_blank">{{ .URL }}</a>
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ .Clicks }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ .CreatorName }}</td>
+                                    </tr>
+                                    {{ end }}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
-{{ template "layout" . }}
+                    <!-- Recent Activity -->
+                    <div class="mt-8">
+                        <h2 class="text-lg font-medium text-gray-900">Recent Activity</h2>
+                        <div class="mt-4 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+                            <table class="min-w-full divide-y divide-gray-300">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Alias</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Created</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Creator</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200 bg-white">
+                                    {{ range .recentLinks }}
+                                    <tr>
+                                        <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-indigo-600 sm:pl-6">
+                                            <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
+                                        </td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ .CreatedAt.Format "2006-01-02 15:04" }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ .CreatorName }}</td>
+                                    </tr>
+                                    {{ end }}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

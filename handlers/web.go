@@ -21,7 +21,7 @@ func HandleHome(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		log.Printf("Found %d links", len(links))
-		c.HTML(http.StatusOK, "layout", gin.H{
+		c.HTML(http.StatusOK, "index.html", gin.H{
 			"title":  "Home",
 			"active": "home",
 			"links":  links,
@@ -53,7 +53,7 @@ func HandleStats(db *gorm.DB) gin.HandlerFunc {
 		db.Order("created_at desc").Limit(5).Find(&recentLinks)
 
 		log.Printf("Stats: %d links, %d clicks, %d users", totalLinks, totalClicks, activeUsers)
-		c.HTML(http.StatusOK, "layout", gin.H{
+		c.HTML(http.StatusOK, "stats.html", gin.H{
 			"title":       "Statistics",
 			"active":      "stats",
 			"totalLinks":  totalLinks,

@@ -42,6 +42,48 @@ func ListLinks(db *gorm.DB) gin.HandlerFunc {
 // POST /api/links
 func CreateLink(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Check if it's an HTMX request
+		if c.GetHeader("HX-Request") == "true" {
+			// Parse form data
+			alias := c.PostForm("alias")
+			url := c.PostForm("url")
+			creatorName := c.PostForm("creator_name")
+
+			if alias == "" || url == "" || creatorName == "" {
+				c.String(http.StatusBadRequest, "All fields are required")
+				return
+			}
+
+			// Validate URL
+			if !validateURL(url) {
+				c.String(http.StatusBadRequest, "Invalid URL format")
+				return
+			}
+
+			// Check for duplicate alias
+			var existing models.Link
+			if err := db.Where("alias = ?", alias).First(&existing).Error; err == nil {
+				c.String(http.StatusConflict, "Alias already exists")
+				return
+			}
+
+			link := models.Link{
+				Alias:       alias,
+				URL:         url,
+				CreatorName: creatorName,
+			}
+
+			if err := db.Create(&link).Error; err != nil {
+				c.String(http.StatusInternalServerError, "Failed to create link")
+				return
+			}
+
+			// Return the new link row HTML
+			c.HTML(http.StatusCreated, "link_row", link)
+			return
+		}
+
+		// Handle regular JSON API request
 		var req CreateLinkRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})

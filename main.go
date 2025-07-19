@@ -28,7 +28,7 @@ func main() {
 
 	// Load HTML templates
 	r.LoadHTMLGlob("templates/*.html")
-	log.Println("Templates loaded from templates/*.html")
+	log.Println("Templates loaded")
 
 	// Web routes
 	r.GET("/", handlers.HandleHome(db))
