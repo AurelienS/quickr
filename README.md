@@ -2,6 +2,12 @@
 
 A modern URL shortener built with Go, featuring a clean UI with HTMX for dynamic interactions.
 
+## Screenshots
+
+<img width="526" height="411" alt="image" src="https://github.com/user-attachments/assets/0d45aa77-7bd5-4421-9d65-5423af81a35b" />
+<img width="526" height="411" alt="image" src="https://github.com/user-attachments/assets/2525ffa1-7576-432a-a49d-07d25734dcd7" />
+<img width="526" height="411" alt="image" src="https://github.com/user-attachments/assets/0c81e920-38ce-4af3-8016-fdcd15ee2433" />
+
 ## Features
 
 - **URL Shortening**: Create short, memorable aliases for long URLs
