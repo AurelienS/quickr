@@ -39,6 +39,10 @@ func main() {
 	r.LoadHTMLGlob("templates/*.html")
 	log.Println("Templates loaded")
 
+	// Serve static files
+	r.Static("/static", "./static")
+	log.Println("Static files route added")
+
 	// Web routes
 	r.GET("/", handlers.HandleHome(db))
 	r.GET("/stats", handlers.HandleStats(db))

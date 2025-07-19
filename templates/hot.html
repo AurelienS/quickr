@@ -1,33 +1,62 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-gray-50">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hot Links - Quickr</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            bg: '#1a1b1e',
+                            surface: '#25262b',
+                            border: '#2c2e33',
+                            text: '#c1c2c5',
+                            primary: '#5c7cfa'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="/static/js/theme.js"></script>
 </head>
-<body class="h-full">
+<body class="h-full bg-gray-50 dark:bg-dark-bg dark:text-dark-text">
     <div class="min-h-full">
         <!-- Navigation -->
-        <nav class="bg-white shadow">
+        <nav class="bg-white shadow dark:bg-dark-surface dark:border-b dark:border-dark-border">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div class="flex h-16 justify-between">
+                <div class="flex h-16 justify-between items-center">
                     <div class="flex">
                         <div class="flex flex-shrink-0 items-center">
-                            <a href="/" class="text-2xl font-bold text-indigo-600">Quickr</a>
+                            <a href="/" class="text-2xl font-bold text-indigo-600 dark:text-dark-primary">Quickr</a>
                         </div>
                         <div class="ml-6 flex space-x-8">
-                            <a href="/" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "home" }}border-indigo-500 text-gray-900{{ else }}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{{ end }}">
+                            <a href="/" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "home" }}border-indigo-500 text-gray-900 dark:text-white dark:border-dark-primary{{ else }}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{{ end }}">
                                 Home
                             </a>
-                            <a href="/hot" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "hot" }}border-indigo-500 text-gray-900{{ else }}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{{ end }}">
+                            <a href="/hot" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "hot" }}border-indigo-500 text-gray-900 dark:text-white dark:border-dark-primary{{ else }}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{{ end }}">
                                 Hot
                             </a>
-                            <a href="/stats" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "stats" }}border-indigo-500 text-gray-900{{ else }}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700{{ end }}">
+                            <a href="/stats" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "stats" }}border-indigo-500 text-gray-900 dark:text-white dark:border-dark-primary{{ else }}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{{ end }}">
                                 Stats
                             </a>
                         </div>
                     </div>
+                    <button type="button"
+                        onclick="toggleTheme()"
+                        class="rounded-lg p-2.5 text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-700">
+                        <svg class="w-5 h-5 hidden dark:block" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"/>
+                        </svg>
+                        <svg class="w-5 h-5 dark:hidden" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
         </nav>
@@ -39,44 +68,44 @@
                     <!-- Recently Added -->
                     <div class="sm:flex sm:items-center">
                         <div class="sm:flex-auto">
-                            <h1 class="text-xl font-semibold text-gray-900">Recently Added</h1>
-                            <p class="mt-2 text-sm text-gray-700">Links created in the last 24 hours.</p>
+                            <h1 class="text-xl font-semibold text-gray-900 dark:text-white">Recently Added</h1>
+                            <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">Links created in the last 24 hours.</p>
                         </div>
                     </div>
                     <div class="mt-4 flow-root">
                         <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                             <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
                                 <table class="min-w-full">
-                                    <thead class="bg-white">
+                                    <thead class="bg-white dark:bg-dark-surface">
                                         <tr>
-                                            <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">Alias</th>
-                                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">URL</th>
-                                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Clicks</th>
-                                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Creator</th>
+                                            <th scope="col" class="py-3.5 pl-6 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Alias</th>
+                                            <th scope="col" class="px-6 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">URL</th>
+                                            <th scope="col" class="px-6 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Clicks</th>
+                                            <th scope="col" class="px-6 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Creator</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y divide-gray-200 bg-white">
+                                    <tbody class="divide-y divide-gray-200 bg-white dark:bg-dark-surface dark:divide-dark-border">
                                         {{ range .recent }}
                                         <tr>
-                                            <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-indigo-600 sm:pl-0">
-                                                <div class="flex items-center gap-2">
+                                            <td class="whitespace-nowrap py-4 pl-6 pr-3 text-sm font-medium text-indigo-600 dark:text-dark-primary">
+                                                <div class="flex items-center gap-3">
                                                     <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
                                                     <button type="button"
-                                                        class="text-gray-400 hover:text-gray-600 copy-button"
+                                                        class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 copy-button"
                                                         data-url="{{ .Alias }}"
                                                         title="Copier le lien">
                                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                                                         </svg>
                                                     </button>
-                                                    <div class="copy-notification hidden fixed bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg text-sm">
+                                                    <div class="copy-notification hidden fixed bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg text-sm dark:bg-gray-700">
                                                         Lien copié !
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ .URL }}</td>
-                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ .Clicks }}</td>
-                                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ .CreatorName }}</td>
+                                            <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ .URL }}</td>
+                                            <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ .Clicks }}</td>
+                                            <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{{ .CreatorName }}</td>
                                         </tr>
                                         {{ end }}
                                     </tbody>
@@ -89,32 +118,32 @@
                     <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
                         <!-- Last 7 days -->
                         <div>
-                            <h2 class="text-lg font-semibold text-gray-900">Top Links (7 days)</h2>
+                            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Top Links (7 days)</h2>
                             <div class="mt-4 flow-root">
-                                <ul role="list" class="divide-y divide-gray-200">
+                                <ul role="list" class="divide-y divide-gray-200 dark:divide-dark-border">
                                     {{ range .top7d }}
                                     <li class="py-4">
                                         <div class="flex items-center space-x-4">
                                             <div class="min-w-0 flex-1">
-                                                <p class="truncate text-sm font-medium text-indigo-600">
-                                                    <div class="flex items-center gap-2">
+                                                <p class="truncate text-sm font-medium text-indigo-600 dark:text-dark-primary">
+                                                    <div class="flex items-center gap-3">
                                                         <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
                                                         <button type="button"
-                                                            class="text-gray-400 hover:text-gray-600 copy-button"
+                                                            class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 copy-button"
                                                             data-url="{{ .Alias }}"
                                                             title="Copier le lien">
                                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                                                             </svg>
                                                         </button>
-                                                        <div class="copy-notification hidden fixed bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg text-sm">
+                                                        <div class="copy-notification hidden fixed bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg text-sm dark:bg-gray-700">
                                                             Lien copié !
                                                         </div>
                                                     </div>
                                                 </p>
-                                                <p class="truncate text-sm text-gray-500">{{ .URL }}</p>
+                                                <p class="truncate text-sm text-gray-500 dark:text-gray-400">{{ .URL }}</p>
                                             </div>
-                                            <div class="inline-flex items-center text-sm text-gray-500">
+                                            <div class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400">
                                                 {{ .Clicks }} clicks
                                             </div>
                                         </div>
@@ -126,32 +155,32 @@
 
                         <!-- Last 30 days -->
                         <div>
-                            <h2 class="text-lg font-semibold text-gray-900">Top Links (30 days)</h2>
+                            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Top Links (30 days)</h2>
                             <div class="mt-4 flow-root">
-                                <ul role="list" class="divide-y divide-gray-200">
+                                <ul role="list" class="divide-y divide-gray-200 dark:divide-dark-border">
                                     {{ range .top30d }}
                                     <li class="py-4">
                                         <div class="flex items-center space-x-4">
                                             <div class="min-w-0 flex-1">
-                                                <p class="truncate text-sm font-medium text-indigo-600">
-                                                    <div class="flex items-center gap-2">
+                                                <p class="truncate text-sm font-medium text-indigo-600 dark:text-dark-primary">
+                                                    <div class="flex items-center gap-3">
                                                         <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
                                                         <button type="button"
-                                                            class="text-gray-400 hover:text-gray-600 copy-button"
+                                                            class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 copy-button"
                                                             data-url="{{ .Alias }}"
                                                             title="Copier le lien">
                                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                                                             </svg>
                                                         </button>
-                                                        <div class="copy-notification hidden fixed bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg text-sm">
+                                                        <div class="copy-notification hidden fixed bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg text-sm dark:bg-gray-700">
                                                             Lien copié !
                                                         </div>
                                                     </div>
                                                 </p>
-                                                <p class="truncate text-sm text-gray-500">{{ .URL }}</p>
+                                                <p class="truncate text-sm text-gray-500 dark:text-gray-400">{{ .URL }}</p>
                                             </div>
-                                            <div class="inline-flex items-center text-sm text-gray-500">
+                                            <div class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400">
                                                 {{ .Clicks }} clicks
                                             </div>
                                         </div>
@@ -163,32 +192,32 @@
 
                         <!-- All time -->
                         <div>
-                            <h2 class="text-lg font-semibold text-gray-900">Top Links (All time)</h2>
+                            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Top Links (All time)</h2>
                             <div class="mt-4 flow-root">
-                                <ul role="list" class="divide-y divide-gray-200">
+                                <ul role="list" class="divide-y divide-gray-200 dark:divide-dark-border">
                                     {{ range .topAll }}
                                     <li class="py-4">
                                         <div class="flex items-center space-x-4">
                                             <div class="min-w-0 flex-1">
-                                                <p class="truncate text-sm font-medium text-indigo-600">
-                                                    <div class="flex items-center gap-2">
+                                                <p class="truncate text-sm font-medium text-indigo-600 dark:text-dark-primary">
+                                                    <div class="flex items-center gap-3">
                                                         <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
                                                         <button type="button"
-                                                            class="text-gray-400 hover:text-gray-600 copy-button"
+                                                            class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 copy-button"
                                                             data-url="{{ .Alias }}"
                                                             title="Copier le lien">
                                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                                                             </svg>
                                                         </button>
-                                                        <div class="copy-notification hidden fixed bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg text-sm">
+                                                        <div class="copy-notification hidden fixed bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg text-sm dark:bg-gray-700">
                                                             Lien copié !
                                                         </div>
                                                     </div>
                                                 </p>
-                                                <p class="truncate text-sm text-gray-500">{{ .URL }}</p>
+                                                <p class="truncate text-sm text-gray-500 dark:text-gray-400">{{ .URL }}</p>
                                             </div>
-                                            <div class="inline-flex items-center text-sm text-gray-500">
+                                            <div class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400">
                                                 {{ .Clicks }} clicks
                                             </div>
                                         </div>
