@@ -106,20 +106,22 @@
                                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Clicks</th>
                                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Creator</th>
                                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Created</th>
+                                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-gray-200 bg-white">
                                             {{ range .links }}
-                                            <tr>
+                                            <tr id="link-{{ .ID }}">
                                                 <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-indigo-600 sm:pl-6" data-id="{{ .ID }}" data-field="alias">
                                                     <div class="flex items-center gap-2 min-w-[200px] h-[26px]">
-                                                        <span class="cursor-pointer hover:text-indigo-500 flex-1"
+                                                        <a href="/go/{{ .Alias }}" class="cursor-pointer hover:text-indigo-500 flex-1"
                                                             hx-get="/api/links/{{ .ID }}/edit?field=alias"
                                                             hx-trigger="click"
                                                             hx-target="closest td"
-                                                            hx-swap="outerHTML">
+                                                            hx-swap="outerHTML"
+                                                            onclick="event.preventDefault()">
                                                             {{ .Alias }}
-                                                        </span>
+                                                        </a>
                                                     </div>
                                                 </td>
                                                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500" data-id="{{ .ID }}" data-field="url">
@@ -131,7 +133,7 @@
                                                             hx-swap="outerHTML">
                                                             {{ .URL }}
                                                         </span>
-                                                        <a href="{{ .URL }}" target="_blank" class="text-gray-400 hover:text-gray-600 shrink-0">
+                                                        <a href="/go/{{ .Alias }}" target="_blank" class="text-gray-400 hover:text-gray-600 shrink-0">
                                                             <svg class="inline-block h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                                                             </svg>
@@ -141,6 +143,14 @@
                                                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ .Clicks }}</td>
                                                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ .CreatorName }}</td>
                                                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ .CreatedAt.Format "2006-01-02" }}</td>
+                                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                                    <button type="button" class="text-red-600 hover:text-red-900"
+                                                        onclick="showDeleteModal('{{ .ID }}', '{{ .Alias }}')">
+                                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                    </button>
+                                                </td>
                                             </tr>
                                             {{ end }}
                                         </tbody>
@@ -152,6 +162,49 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden" aria-hidden="true" data-link-id="">
+        <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                            </svg>
+                        </div>
+                        <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                            <h3 class="text-base font-semibold leading-6 text-gray-900">Delete Link</h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500">
+                                    Are you sure you want to delete the link "<span id="deleteAlias"></span>"? This action cannot be undone.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                        <button type="button"
+                            class="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto"
+                            onclick="deleteLink()">
+                            <span id="deleteSpinner" class="htmx-indicator inline-block mr-2">
+                                <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </span>
+                            Delete
+                        </button>
+                        <button type="button"
+                            onclick="hideDeleteModal()"
+                            class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -216,6 +269,41 @@
                 }
             }
         });
+    });
+
+    // Delete modal functions
+    function showDeleteModal(id, alias) {
+        const modal = document.getElementById('deleteModal');
+        const aliasSpan = document.getElementById('deleteAlias');
+
+        modal.classList.remove('hidden');
+        modal.dataset.linkId = id;
+        aliasSpan.textContent = alias;
+    }
+
+    function hideDeleteModal() {
+        const modal = document.getElementById('deleteModal');
+        modal.classList.add('hidden');
+        modal.dataset.linkId = '';
+    }
+
+    function deleteLink() {
+        const modal = document.getElementById('deleteModal');
+        const id = modal.dataset.linkId;
+
+        htmx.ajax('DELETE', `/api/links/${id}`, {
+            target: '#links-table tbody',
+            swap: 'innerHTML'
+        }).then(() => {
+            hideDeleteModal();
+        });
+    }
+
+    // Handle successful deletion
+    document.body.addEventListener('htmx:afterRequest', function(evt) {
+        if (evt.detail.successful && evt.detail.pathInfo.requestPath.startsWith('/api/links/') && evt.detail.pathInfo.method === 'DELETE') {
+            hideDeleteModal();
+        }
     });
     </script>
 </body>

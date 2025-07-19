@@ -213,12 +213,22 @@ func DeleteLink(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var link models.Link
 		if err := db.First(&link, c.Param("id")).Error; err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Link not found"})
+			c.String(http.StatusNotFound, "Link not found")
 			return
 		}
 
 		if err := db.Delete(&link).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete link"})
+			c.String(http.StatusInternalServerError, "Failed to delete link")
+			return
+		}
+
+		// If it's an HTMX request, return the updated list
+		if c.GetHeader("HX-Request") == "true" {
+			var links []models.Link
+			db.Order("created_at desc").Find(&links)
+			c.HTML(http.StatusOK, "link_rows.html", gin.H{
+				"links": links,
+			})
 			return
 		}
 

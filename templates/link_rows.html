@@ -1,4 +1,5 @@
-<tr id="link-{{ .ID }}">
+{{ range .links }}
+<tr>
     <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-indigo-600 sm:pl-6" data-id="{{ .ID }}" data-field="alias">
         <div class="flex items-center gap-2 min-w-[200px] h-[26px]">
             <a href="/go/{{ .Alias }}" class="cursor-pointer hover:text-indigo-500 flex-1"
@@ -39,3 +40,4 @@
         </button>
     </td>
 </tr>
+{{ end }}
