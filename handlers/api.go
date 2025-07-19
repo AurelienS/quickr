@@ -118,32 +118,89 @@ func CreateLink(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
-// PUT /api/links/:id
-func UpdateLink(db *gorm.DB) gin.HandlerFunc {
+// GET /api/links/:id/edit
+func GetLinkEditField(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var req UpdateLinkRequest
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-			return
-		}
+		id := c.Param("id")
+		field := c.Query("field")
 
-		// Validate URL
-		if !validateURL(req.URL) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid URL format"})
+		if field != "alias" && field != "url" {
+			c.String(http.StatusBadRequest, "Invalid field")
 			return
 		}
 
 		var link models.Link
-		if err := db.First(&link, c.Param("id")).Error; err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Link not found"})
+		if err := db.First(&link, id).Error; err != nil {
+			c.String(http.StatusNotFound, "Link not found")
 			return
 		}
 
-		link.URL = req.URL
-		link.CreatorName = req.CreatorName
+		var value string
+		if field == "alias" {
+			value = link.Alias
+		} else {
+			value = link.URL
+		}
+
+		c.HTML(http.StatusOK, "link_edit.html", gin.H{
+			"id":    link.ID,
+			"field": field,
+			"value": value,
+		})
+	}
+}
+
+// PUT /api/links/:id
+func UpdateLink(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		var link models.Link
+		if err := db.First(&link, id).Error; err != nil {
+			c.String(http.StatusNotFound, "Link not found")
+			return
+		}
+
+		// Check which field is being updated
+		if alias := c.PostForm("alias"); alias != "" {
+			// Check for duplicate alias
+			var existing models.Link
+			if err := db.Where("alias = ? AND id != ?", alias, id).First(&existing).Error; err == nil {
+				c.String(http.StatusConflict, "Alias already exists")
+				return
+			}
+			link.Alias = alias
+		}
+
+		if url := c.PostForm("url"); url != "" {
+			if !validateURL(url) {
+				c.String(http.StatusBadRequest, "Invalid URL format")
+				return
+			}
+			link.URL = url
+		}
 
 		if err := db.Save(&link).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update link"})
+			c.String(http.StatusInternalServerError, "Failed to update link")
+			return
+		}
+
+		// Return the updated cell HTML
+		if c.GetHeader("HX-Request") == "true" {
+			if alias := c.PostForm("alias"); alias != "" {
+				c.HTML(http.StatusOK, "link_cell.html", gin.H{
+					"id":    link.ID,
+					"field": "alias",
+					"value": link.Alias,
+				})
+			} else if url := c.PostForm("url"); url != "" {
+				c.HTML(http.StatusOK, "link_cell.html", gin.H{
+					"id":    link.ID,
+					"field": "url",
+					"value": link.URL,
+					"alias": link.Alias,
+				})
+			}
 			return
 		}
 

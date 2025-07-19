@@ -24,7 +24,16 @@ func main() {
 	}
 
 	// Setup Gin router
-	r := gin.Default()
+	r := gin.New() // Don't use Default() as it already includes Logger
+	r.Use(gin.Logger())
+	r.Use(gin.Recovery())
+
+	// Add our custom request logger
+	r.Use(func(c *gin.Context) {
+		log.Printf("[REQUEST] %s %s", c.Request.Method, c.Request.URL.Path)
+		c.Next()
+		log.Printf("[RESPONSE] %s %s -> %d", c.Request.Method, c.Request.URL.Path, c.Writer.Status())
+	})
 
 	// Load HTML templates
 	r.LoadHTMLGlob("templates/*.html")
@@ -34,14 +43,18 @@ func main() {
 	r.GET("/", handlers.HandleHome(db))
 	r.GET("/stats", handlers.HandleStats(db))
 
-	// Redirect route
-	r.GET("/go/:alias", handlers.HandleRedirect(db))
+	// Redirect route with debug handler
+	r.GET("/go/:alias", func(c *gin.Context) {
+		log.Printf("[DEBUG] About to call redirect handler for alias: %s", c.Param("alias"))
+		handlers.HandleRedirect(db)(c)
+	})
 
 	// API routes
 	api := r.Group("/api")
 	{
 		api.GET("/links", handlers.ListLinks(db))
 		api.POST("/links", handlers.CreateLink(db))
+		api.GET("/links/:id/edit", handlers.GetLinkEditField(db))
 		api.PUT("/links/:id", handlers.UpdateLink(db))
 		api.DELETE("/links/:id", handlers.DeleteLink(db))
 	}

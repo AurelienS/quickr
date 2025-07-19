@@ -111,11 +111,32 @@
                                         <tbody class="divide-y divide-gray-200 bg-white">
                                             {{ range .links }}
                                             <tr>
-                                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-indigo-600 sm:pl-6">
-                                                    <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
+                                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-indigo-600 sm:pl-6" data-id="{{ .ID }}" data-field="alias">
+                                                    <div class="flex items-center gap-2 min-w-[200px] h-[26px]">
+                                                        <span class="cursor-pointer hover:text-indigo-500 flex-1"
+                                                            hx-get="/api/links/{{ .ID }}/edit?field=alias"
+                                                            hx-trigger="click"
+                                                            hx-target="closest td"
+                                                            hx-swap="outerHTML">
+                                                            {{ .Alias }}
+                                                        </span>
+                                                    </div>
                                                 </td>
-                                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                                    <a href="{{ .URL }}" class="text-gray-600 hover:text-gray-900" target="_blank">{{ .URL }}</a>
+                                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500" data-id="{{ .ID }}" data-field="url">
+                                                    <div class="flex items-center gap-2 min-w-[300px] h-[26px]">
+                                                        <span class="cursor-pointer hover:text-gray-900 flex-1 truncate"
+                                                            hx-get="/api/links/{{ .ID }}/edit?field=url"
+                                                            hx-trigger="click"
+                                                            hx-target="closest td"
+                                                            hx-swap="outerHTML">
+                                                            {{ .URL }}
+                                                        </span>
+                                                        <a href="{{ .URL }}" target="_blank" class="text-gray-400 hover:text-gray-600 shrink-0">
+                                                            <svg class="inline-block h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                                            </svg>
+                                                        </a>
+                                                    </div>
                                                 </td>
                                                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ .Clicks }}</td>
                                                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ .CreatorName }}</td>
@@ -134,14 +155,67 @@
     </div>
 
     <script>
-    document.body.addEventListener('htmx:responseError', function(evt) {
-        const error = evt.detail.error;
-        const errorDiv = document.getElementById('form-error');
-        errorDiv.textContent = error;
-        errorDiv.classList.remove('hidden');
-        setTimeout(() => {
-            errorDiv.classList.add('hidden');
-        }, 3000);
+    // Single event handler for all events
+    document.addEventListener('htmx:load', function() {
+        // Handle form errors
+        htmx.on('htmx:responseError', function(evt) {
+            const error = evt.detail.error;
+            const errorDiv = document.getElementById('form-error');
+            errorDiv.textContent = error;
+            errorDiv.classList.remove('hidden');
+            setTimeout(() => {
+                errorDiv.classList.add('hidden');
+            }, 3000);
+        });
+
+        // Handle inline editing focus
+        htmx.on('htmx:afterRequest', function(evt) {
+            if (evt.detail.successful && evt.detail.pathInfo.requestPath.includes('/edit')) {
+                // Focus the input after a short delay
+                requestAnimationFrame(() => {
+                    const input = document.querySelector('.editing input');
+                    if (input) {
+                        input.focus();
+                        // Place cursor at the end
+                        const len = input.value.length;
+                        input.setSelectionRange(len, len);
+                    }
+                });
+            }
+        });
+
+        // Handle keyboard events
+        document.addEventListener('keydown', function(evt) {
+            if (evt.key === 'Escape') {
+                const editing = document.querySelector('.editing');
+                if (editing) {
+                    const id = editing.dataset.id;
+                    const field = editing.dataset.field;
+                    htmx.ajax('GET', `/api/links/${id}/edit?field=${field}`, {
+                        target: editing,
+                        swap: 'outerHTML'
+                    });
+                }
+            }
+        });
+
+        // Handle clicks outside editing cells
+        document.addEventListener('click', function(evt) {
+            const editing = document.querySelector('.editing');
+            if (editing && !editing.contains(evt.target)) {
+                const input = editing.querySelector('input');
+                if (input && input.value === input.defaultValue) {
+                    const id = editing.dataset.id;
+                    const field = editing.dataset.field;
+                    htmx.ajax('GET', `/api/links/${id}/edit?field=${field}`, {
+                        target: editing,
+                        swap: 'outerHTML'
+                    });
+                } else if (input) {
+                    input.blur();
+                }
+            }
+        });
     });
     </script>
 </body>
