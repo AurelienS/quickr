@@ -1,7 +1,12 @@
 package main
 
 import (
+	"html/template"
+	"io/fs"
 	"log"
+	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/sqlite"
@@ -10,9 +15,24 @@ import (
 	"quickr/models"
 )
 
+// Ensure database directory exists
+func ensureDBDir() error {
+	dbDir := "data"
+	if err := os.MkdirAll(dbDir, 0755); err != nil {
+		return err
+	}
+	return nil
+}
+
 func main() {
+	// Create data directory if it doesn't exist
+	if err := ensureDBDir(); err != nil {
+		log.Fatal("Failed to create data directory:", err)
+	}
+
 	// Initialize SQLite database
-	db, err := gorm.Open(sqlite.Open("quickr.db"), &gorm.Config{})
+	dbPath := filepath.Join("data", "quickr.db")
+	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
@@ -35,13 +55,18 @@ func main() {
 		log.Printf("[RESPONSE] %s %s -> %d", c.Request.Method, c.Request.URL.Path, c.Writer.Status())
 	})
 
-	// Load HTML templates
-	r.LoadHTMLGlob("templates/*.html")
-	log.Println("Templates loaded")
+	// Load HTML templates from embedded FS
+	templ := template.Must(template.New("").ParseFS(templateFS, "templates/*.html"))
+	r.SetHTMLTemplate(templ)
+	log.Println("Templates loaded from embedded FS")
 
-	// Serve static files
-	r.Static("/static", "./static")
-	log.Println("Static files route added")
+	// Serve static files from embedded FS
+	staticSubFS, err := fs.Sub(staticFS, "static")
+	if err != nil {
+		log.Fatal("Failed to create sub filesystem for static files:", err)
+	}
+	r.StaticFS("/static", http.FS(staticSubFS))
+	log.Println("Static files route added from embedded FS")
 
 	// Web routes
 	r.GET("/", handlers.HandleHome(db))
