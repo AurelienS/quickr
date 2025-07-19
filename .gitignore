@@ -18,9 +18,8 @@ vendor/
 # Go workspace file
 go.work
 
-# SQLite database files
-*.db
-*.db-journal
+# Data directory containing SQLite database
+data/
 
 # IDE specific files
 .idea
