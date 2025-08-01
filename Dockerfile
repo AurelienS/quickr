@@ -30,15 +30,10 @@ RUN apt-get update && apt-get install -y \
     sqlite3 \
     && rm -rf /var/lib/apt/lists/*
 
-# Create a non-root user
-RUN adduser -D -h /app quickr
-USER quickr
-
 # Copy the binary from builder
 COPY --from=builder /app/quickr .
 
-# Create data directory owned by quickr user
-RUN mkdir -p /app/data && chown -R quickr:quickr /app/data
+RUN mkdir -p /app/data
 
 # Expose the port
 EXPOSE 8080
