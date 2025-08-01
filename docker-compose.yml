@@ -3,11 +3,14 @@ version: '3.8'
 services:
   quickr:
     build: .
-    ports:
-      - "8080:8080"
     volumes:
       - quickr_data:/app/data
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.quickr.rule=Host(`quickr.codeas.me`)"
+      - "traefik.http.routers.quickr.entrypoints=websecure"
+      - "traefik.http.routers.quickr.tls.certresolver=letsencrypt"
 
 volumes:
   quickr_data:

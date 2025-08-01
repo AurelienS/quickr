@@ -1,0 +1,24 @@
+name: Deploy Prod
+
+on:
+  push:
+    branches:
+      - prod
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: SSH Deploy
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ubuntu
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /mnt/data/quickr
+            git fetch origin
+            git reset --hard origin/prod
+            docker compose down
+            docker compose up -d --build
