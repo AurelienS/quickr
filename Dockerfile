@@ -4,7 +4,10 @@ FROM golang:1.21-bullseye AS builder
 WORKDIR /app
 
 # Install build dependencies
-RUN apk add --no-cache gcc musl-dev
+RUN apt-get update && apt-get install -y \
+    gcc \
+    libsqlite3-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy only the files needed for go mod download
 COPY go.mod go.sum ./
@@ -17,12 +20,15 @@ COPY . .
 RUN CGO_ENABLED=1 GOOS=linux go build -o quickr
 
 # Final stage
-FROM alpine:3.18
+FROM debian:bullseye-slim
 
 WORKDIR /app
 
-# Install runtime dependencies for SQLite
-RUN apk add --no-cache sqlite
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    sqlite3 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user
 RUN adduser -D -h /app quickr
