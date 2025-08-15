@@ -21,11 +21,17 @@ func HandleHome(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		emailVal, _ := c.Get("userEmail")
+		roleVal, _ := c.Get("userRole")
+		isAdmin := roleVal == "admin"
+
 		log.Printf("Found %d links", len(links))
 		c.HTML(http.StatusOK, "index.html", gin.H{
-			"title":  "Home",
-			"active": "home",
-			"links":  links,
+			"title":     "Home",
+			"active":    "home",
+			"links":     links,
+			"userEmail": emailVal,
+			"isAdmin":   isAdmin,
 		})
 	}
 }
@@ -53,6 +59,10 @@ func HandleStats(db *gorm.DB) gin.HandlerFunc {
 		var recentLinks []models.Link
 		db.Order("created_at desc").Limit(5).Find(&recentLinks)
 
+		emailVal, _ := c.Get("userEmail")
+		roleVal, _ := c.Get("userRole")
+		isAdmin := roleVal == "admin"
+
 		log.Printf("Stats: %d links, %d clicks, %d users", totalLinks, totalClicks, activeUsers)
 		c.HTML(http.StatusOK, "stats.html", gin.H{
 			"title":       "Statistics",
@@ -62,6 +72,8 @@ func HandleStats(db *gorm.DB) gin.HandlerFunc {
 			"activeUsers": activeUsers,
 			"topLinks":    topLinks,
 			"recentLinks": recentLinks,
+			"userEmail":   emailVal,
+			"isAdmin":     isAdmin,
 		})
 	}
 }
@@ -95,12 +107,18 @@ func HandleHot(db *gorm.DB) gin.HandlerFunc {
             Limit(20).
             Find(&topAll)
 
+        emailVal, _ := c.Get("userEmail")
+        roleVal, _ := c.Get("userRole")
+        isAdmin := roleVal == "admin"
+
         c.HTML(http.StatusOK, "hot.html", gin.H{
-            "active":  "hot",
-            "recent":  recent,
-            "top7d":   top7d,
-            "top30d":  top30d,
-            "topAll":  topAll,
+            "active":   "hot",
+            "recent":   recent,
+            "top7d":    top7d,
+            "top30d":   top30d,
+            "topAll":   topAll,
+            "userEmail": emailVal,
+            "isAdmin":   isAdmin,
         })
     }
 }
