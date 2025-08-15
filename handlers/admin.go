@@ -50,8 +50,14 @@ func AdminDashboard(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var invites []models.Invitation
 		db.Order("created_at desc").Limit(200).Find(&invites)
+		emailVal, _ := c.Get("userEmail")
+		roleVal, _ := c.Get("userRole")
+		isAdmin := roleVal == "admin"
 		c.HTML(http.StatusOK, "admin.html", gin.H{
-			"invites": buildInviteRows(db, invites),
+			"active":    "admin",
+			"invites":   buildInviteRows(db, invites),
+			"userEmail": emailVal,
+			"isAdmin":   isAdmin,
 		})
 	}
 }
