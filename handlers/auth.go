@@ -203,7 +203,10 @@ func RequestMagicLink(db *gorm.DB, rateLimiter *IPLimiter, mailer *SendinblueCli
 		}
 
 		link := fmt.Sprintf("%s/magic?token=%s", strings.TrimRight(appBaseURL, "/"), token)
-		_ = mailer.SendMagicLink(email, link)
+		if err := mailer.SendMagicLink(email, link); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send email"})
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{"message": "Magic link sent if email is invited"})
 	}
 }

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -29,6 +30,7 @@ func CreateInvitation(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "email required"})
 			return
 		}
+		log.Printf("[ADMIN] CreateInvitation for %s", email)
 		// Revoke any active invites
 		db.Model(&models.Invitation{}).Where("email = ? AND status IN ?", email, []string{"pending", "sent"}).Update("status", "revoked")
 		// Create pending invite with a unique placeholder token to satisfy UNIQUE constraint
@@ -47,6 +49,7 @@ func CreateInvitation(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create invitation"})
 			return
 		}
+		log.Printf("[ADMIN] Invitation %d created for %s", inv.ID, inv.Email)
 
 		if c.GetHeader("HX-Request") == "true" {
 			c.HTML(http.StatusCreated, "admin_invite_row.html", inv)
@@ -77,7 +80,7 @@ func RevokeInvitation(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
-// POST /admin/invitations/:id/send generates token, marks as sent, returns row
+// POST /admin/invitations/:id/send generates token if needed, sends email, then marks as sent
 func SendInvitation(db *gorm.DB, mailer *SendinblueClient, appBaseURL string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var inv models.Invitation
@@ -85,24 +88,45 @@ func SendInvitation(db *gorm.DB, mailer *SendinblueClient, appBaseURL string) gi
 			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
 			return
 		}
+		log.Printf("[ADMIN] SendInvitation id=%d email=%s status=%s", inv.ID, inv.Email, inv.Status)
 		if inv.Status == "used" || inv.Status == "revoked" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "cannot send this invite"})
 			return
 		}
-		token, err := generateToken(32)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token"})
+		// Ensure token exists
+		if inv.Token == "" {
+			token, err := generateToken(32)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token"})
+				return
+			}
+			inv.Token = token
+			inv.ExpiresAt = time.Now().Add(7 * 24 * time.Hour)
+			if err := db.Save(&inv).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save invite"})
+				return
+			}
+		}
+		link := appBaseURL + "/magic?token=" + inv.Token
+		log.Printf("[ADMIN] Sending magic link to %s", inv.Email)
+		if err := mailer.SendMagicLink(inv.Email, link); err != nil {
+			log.Printf("[ADMIN] Send failed for %s: %v", inv.Email, err)
+			if c.GetHeader("HX-Request") == "true" {
+				// Prevent swapping the row and show an out-of-band error
+				c.Header("HX-Reswap", "none")
+				c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(`<div id="invite-error" hx-swap-oob="true">Failed to send email. Check SENDINBLUE_API_KEY.</div>`))
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send email"})
 			return
 		}
-		inv.Token = token
+		// Mark as sent only after successful email
 		inv.Status = "sent"
-		inv.ExpiresAt = time.Now().Add(7 * 24 * time.Hour)
 		if err := db.Save(&inv).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save invite"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update invite"})
 			return
 		}
-		link := appBaseURL + "/magic?token=" + token
-		_ = mailer.SendMagicLink(inv.Email, link)
+		log.Printf("[ADMIN] Invitation %d marked sent", inv.ID)
 		if c.GetHeader("HX-Request") == "true" {
 			c.HTML(http.StatusOK, "admin_invite_row.html", inv)
 			return

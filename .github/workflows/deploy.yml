@@ -24,5 +24,8 @@ jobs:
             export JWT_SECRET=${{ secrets.JWT_SECRET }}
             export ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
             export SENDINBLUE_API_KEY=${{ secrets.SENDINBLUE_API_KEY }}
+            export SENDER_EMAIL=${{ secrets.SENDER_EMAIL }}
+            export SENDER_NAME=${{ secrets.SENDER_NAME }}
+            export BREVO_API_BASE=${{ secrets.BREVO_API_BASE }}
             docker compose down
             docker compose up -d --build
