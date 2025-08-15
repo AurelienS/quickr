@@ -103,7 +103,16 @@ func CreateInvitation(db *gorm.DB) gin.HandlerFunc {
 		log.Printf("[ADMIN] Invitation %d created for %s", inv.ID, inv.Email)
 
 		if c.GetHeader("HX-Request") == "true" {
-			c.HTML(http.StatusCreated, "admin_invite_row.html", inv)
+			var row InviteRow
+			{
+				var u models.User
+				if err := db.Where("email = ?", inv.Email).First(&u).Error; err == nil {
+					row = InviteRow{Invitation: inv, UserDisabled: u.Disabled}
+				} else {
+					row = InviteRow{Invitation: inv, UserDisabled: false}
+				}
+			}
+			c.HTML(http.StatusCreated, "admin_invite_row.html", row)
 			return
 		}
 		c.JSON(http.StatusCreated, inv)
@@ -128,7 +137,16 @@ func RevokeInvitation(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 		if c.GetHeader("HX-Request") == "true" {
-			c.HTML(http.StatusOK, "admin_invite_row.html", inv)
+			var row InviteRow
+			{
+				var u models.User
+				if err := db.Where("email = ?", inv.Email).First(&u).Error; err == nil {
+					row = InviteRow{Invitation: inv, UserDisabled: u.Disabled}
+				} else {
+					row = InviteRow{Invitation: inv, UserDisabled: false}
+				}
+			}
+			c.HTML(http.StatusOK, "admin_invite_row.html", row)
 			return
 		}
 		c.JSON(http.StatusOK, inv)
@@ -235,7 +253,16 @@ func SendInvitation(db *gorm.DB, mailer *SendinblueClient, appBaseURL string) gi
 		}
 		log.Printf("[ADMIN] Invitation %d marked sent", inv.ID)
 		if c.GetHeader("HX-Request") == "true" {
-			c.HTML(http.StatusOK, "admin_invite_row.html", inv)
+			var row InviteRow
+			{
+				var u models.User
+				if err := db.Where("email = ?", inv.Email).First(&u).Error; err == nil {
+					row = InviteRow{Invitation: inv, UserDisabled: u.Disabled}
+				} else {
+					row = InviteRow{Invitation: inv, UserDisabled: false}
+				}
+			}
+			c.HTML(http.StatusOK, "admin_invite_row.html", row)
 			return
 		}
 		c.JSON(http.StatusOK, inv)
