@@ -20,5 +20,9 @@ jobs:
             cd /mnt/data/quickr
             git fetch origin
             git reset --hard origin/prod
+            export APP_BASE_URL=${{ secrets.APP_BASE_URL }}
+            export JWT_SECRET=${{ secrets.JWT_SECRET }}
+            export ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
+            export SENDINBLUE_API_KEY=${{ secrets.SENDINBLUE_API_KEY }}
             docker compose down
             docker compose up -d --build

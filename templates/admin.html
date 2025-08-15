@@ -1,0 +1,29 @@
+{{define "admin.html"}}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Admin</title>
+	<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+	<h1>Admin</h1>
+	<form method="POST" action="/admin/invitations"
+		hx-post="/admin/invitations"
+		hx-target="#invites-body"
+		hx-swap="afterbegin">
+		<input type="email" name="email" placeholder="Invite email" required />
+		<button type="submit">Create Invite</button>
+	</form>
+	<h2>Invitations</h2>
+	<table>
+		<tr><th>Email</th><th>Status</th><th>Expires</th><th>Actions</th></tr>
+		<tbody id="invites-body">
+		{{range .invites}}
+			{{template "admin_invite_row.html" .}}
+		{{end}}
+		</tbody>
+	</table>
+</body>
+</html>
+{{end}}

@@ -1,0 +1,23 @@
+{{define "login.html"}}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Sign in</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<script>
+		tailwind.config = { darkMode: 'class' }
+	</script>
+</head>
+<body class="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+	<div class="w-full max-w-md bg-white rounded-lg shadow p-6">
+		<h1 class="text-2xl font-bold mb-2">Sign in</h1>
+		<p class="text-sm text-gray-600 mb-4">Enter your invited email. We'll email a one-time sign-in link.</p>
+		<form method="POST" action="/login" class="space-y-4">
+			<input type="email" name="email" placeholder="you@example.com" required class="w-full border rounded px-3 py-2" />
+			<button type="submit" class="w-full bg-indigo-600 text-white rounded px-4 py-2">Send magic link</button>
+		</form>
+	</div>
+</body>
+</html>
+{{end}}

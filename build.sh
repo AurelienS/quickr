@@ -1,5 +1,25 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Load .env if present
+if [ -f .env ]; then
+	set -a
+	source .env
+	set +a
+fi
+
+CMD=${1:-}
+case "$CMD" in
+	reset-db)
+		printf "> Resetting local SQLite database...\n"
+		rm -f data/quickr.db
+		mkdir -p data
+		printf "Done.\n"
+		;;
+	*)
+		echo "Usage: $0 {reset-db}"
+		;;
+ esac
 
 echo "Building quickr..."
 go build -o quickr

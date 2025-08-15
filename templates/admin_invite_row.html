@@ -1,0 +1,21 @@
+{{define "admin_invite_row.html"}}
+<tr id="invite-{{ .ID }}">
+    <td class="py-2 px-3">{{ .Email }}</td>
+    <td class="py-2 px-3">{{ .Status }}</td>
+    <td class="py-2 px-3">{{ .ExpiresAt.Format "2006-01-02" }}</td>
+    <td class="py-2 px-3 space-x-2">
+        <button
+            hx-post="/admin/invitations/{{ .ID }}/send"
+            hx-target="closest tr"
+            hx-swap="outerHTML"
+            class="text-blue-600 hover:underline"
+            type="button">Send</button>
+        <button
+            hx-post="/admin/invitations/{{ .ID }}/revoke"
+            hx-target="closest tr"
+            hx-swap="outerHTML"
+            class="text-red-600 hover:underline"
+            type="button">Revoke</button>
+    </td>
+</tr>
+{{end}}
