@@ -20,7 +20,7 @@ import (
 //go:embed templates/*.html
 var templateFS embed.FS
 
-//go:embed static/js/*.js
+//go:embed static/js/*.js static/css/*.css
 var staticFS embed.FS
 
 // Ensure database directory exists
