@@ -1,9 +1,9 @@
 {{define "admin_invite_row.html"}}
 <tr id="invite-{{ .ID }}">
-    <td class="py-2 px-3">{{ .Email }}</td>
-    <td class="py-2 px-3">{{ .Status }}</td>
-    <td class="py-2 px-3">{{ .ExpiresAt.Format "2006-01-02" }}</td>
-    <td class="py-2 px-3 space-x-2">
+    <td class="py-3.5 pl-4 pr-3 text-sm text-gray-900 dark:text-white sm:pl-6">{{ .Email }}</td>
+    <td class="px-3 py-3.5 text-sm text-gray-500 dark:text-gray-300">{{ .Status }}</td>
+    <td class="px-3 py-3.5 text-sm text-gray-500 dark:text-gray-300">{{ .ExpiresAt.Format "2006-01-02" }}</td>
+    <td class="px-3 py-3.5 text-sm">
         <button
             hx-post="/admin/invitations/{{ .ID }}/send"
             hx-target="closest tr"

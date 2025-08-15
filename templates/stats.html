@@ -31,7 +31,7 @@
         .htmx-request.htmx-indicator { opacity: 1; }
     </style>
 </head>
-<body class="h-full bg-gray-50 dark:bg-dark-bg dark:text-dark-text">
+<body class="h-full bg-gray-50 dark:bg-dark-bg dark:text-dark-text" hx-boost="true">
     <div class="min-h-full">
         <!-- Navigation -->
         <nav class="bg-white shadow dark:bg-dark-surface dark:border-b dark:border-dark-border">
@@ -45,10 +45,10 @@
                              <a href="/" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "home" }}border-indigo-500 text-gray-900 dark:text-white dark:border-dark-primary{{ else }}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{{ end }}">
                                  Home
                              </a>
-                             <a href="/hot" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "hot" }}border-indigo-500 text-gray-900 dark:text-white dark:border-dark-primary{{ else }}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{{ end }}">
+                             <a href="/hot" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "hot" }}border-indigo-500 text-gray-900 dark:text-white dark:border-dark-primary{{ else }}border-transparent text-gray-500 hover;border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{{ end }}">
                                  Hot
                              </a>
-                             <a href="/stats" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "stats" }}border-indigo-500 text-gray-900 dark:text-white dark:border-dark-primary{{ else }}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{{ end }}">
+                             <a href="/stats" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "stats" }}border-indigo-500 text-gray-900 dark:text-white dark:border-dark-primary{{ else }}border-transparent text-gray-500 hover;border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{{ end }}">
                                  Stats
                              </a>
                              {{ if .isAdmin }}
