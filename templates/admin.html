@@ -64,11 +64,7 @@
 								<th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Actions</th>
 							</tr>
 						</thead>
-						<tbody id="invites-body" class="divide-y divide-gray-200 dark:divide-dark-border">
-							{{range .invites}}
-								{{template "admin_invite_row.html" .}}
-							{{end}}
-						</tbody>
+						{{template "admin_invites_body.html" .}}
 					</table>
 				</div>
 			</div>

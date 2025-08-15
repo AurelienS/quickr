@@ -106,9 +106,9 @@ func main() {
 	r.POST("/logout", handlers.Logout())
 
 	// Web routes (require auth)
-	r.GET("/", handlers.RequireAuth(), handlers.HandleHome(db))
-	r.GET("/stats", handlers.RequireAuth(), handlers.HandleStats(db))
-	r.GET("/hot", handlers.RequireAuth(), handlers.HandleHot(db))
+	r.GET("/", handlers.RequireAuth(db), handlers.HandleHome(db))
+	r.GET("/stats", handlers.RequireAuth(db), handlers.HandleStats(db))
+	r.GET("/hot", handlers.RequireAuth(db), handlers.HandleHot(db))
 
 	// Redirect route with debug handler (keep public)
 	r.GET("/go/:alias", func(c *gin.Context) {
@@ -117,16 +117,17 @@ func main() {
 	})
 
 	// Admin routes
-	admin := r.Group("/admin", handlers.RequireAuth(), handlers.RequireAdmin())
+	admin := r.Group("/admin", handlers.RequireAuth(db), handlers.RequireAdmin())
 	{
 		admin.GET("", handlers.AdminDashboard(db))
 		admin.POST("/invitations", handlers.CreateInvitation(db))
 		admin.POST("/invitations/:id/send", handlers.SendInvitation(db, mailer, appBaseURL))
 		admin.POST("/invitations/:id/revoke", handlers.RevokeInvitation(db))
+		admin.POST("/invitations/revoke-email", handlers.RevokeInvitationsByEmail(db))
 	}
 
 	// API routes (require auth)
-	api := r.Group("/api", handlers.RequireAuth())
+	api := r.Group("/api", handlers.RequireAuth(db))
 	{
 		api.GET("/links", handlers.ListLinks(db))
 		api.POST("/links", handlers.CreateLink(db))

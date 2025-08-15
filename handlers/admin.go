@@ -11,13 +11,47 @@ import (
 	"quickr/models"
 )
 
+// InviteRow is a view model for rendering an invitation row with user-level disabled flag
+type InviteRow struct {
+	models.Invitation
+	UserDisabled bool
+}
+
+// buildInviteRows annotates invitations with user disabled status
+func buildInviteRows(db *gorm.DB, invites []models.Invitation) []InviteRow {
+	rows := make([]InviteRow, 0, len(invites))
+	// Build a set of emails to query once
+	emailSet := map[string]struct{}{}
+	for _, inv := range invites {
+		emailSet[inv.Email] = struct{}{}
+	}
+	// Fetch users for these emails
+	var users []models.User
+	if len(emailSet) > 0 {
+		emails := make([]string, 0, len(emailSet))
+		for e := range emailSet {
+			emails = append(emails, e)
+		}
+		db.Where("email IN ?", emails).Find(&users)
+	}
+	// Map email -> disabled
+	emailToDisabled := map[string]bool{}
+	for _, u := range users {
+		emailToDisabled[u.Email] = u.Disabled
+	}
+	for _, inv := range invites {
+		rows = append(rows, InviteRow{Invitation: inv, UserDisabled: emailToDisabled[inv.Email]})
+	}
+	return rows
+}
+
 // GET /admin renders a simple dashboard (list + create form)
 func AdminDashboard(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var invites []models.Invitation
 		db.Order("created_at desc").Limit(200).Find(&invites)
 		c.HTML(http.StatusOK, "admin.html", gin.H{
-			"invites": invites,
+			"invites": buildInviteRows(db, invites),
 		})
 	}
 }
@@ -33,6 +67,17 @@ func CreateInvitation(db *gorm.DB) gin.HandlerFunc {
 		log.Printf("[ADMIN] CreateInvitation for %s", email)
 		// Revoke any active invites
 		db.Model(&models.Invitation{}).Where("email = ? AND status IN ?", email, []string{"pending", "sent"}).Update("status", "revoked")
+		// Re-enable user if previously disabled
+		var user models.User
+		if err := db.Where("email = ?", email).First(&user).Error; err == nil {
+			if user.Disabled {
+				user.Disabled = false
+				if err := db.Save(&user).Error; err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to re-enable user"})
+					return
+				}
+			}
+		}
 		// Create pending invite with a unique placeholder token to satisfy UNIQUE constraint
 		token, err := generateToken(32)
 		if err != nil {
@@ -67,6 +112,10 @@ func RevokeInvitation(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
 			return
 		}
+		if inv.Status == "used" || inv.Status == "revoked" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "cannot revoke this invite"})
+			return
+		}
 		inv.Status = "revoked"
 		if err := db.Save(&inv).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to revoke"})
@@ -77,6 +126,58 @@ func RevokeInvitation(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, inv)
+	}
+}
+
+// POST /admin/invitations/revoke-email disables the user and revokes all invites for that email
+func RevokeInvitationsByEmail(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		email := strings.TrimSpace(strings.ToLower(c.PostForm("email")))
+		if email == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "email required"})
+			return
+		}
+		log.Printf("[ADMIN] RevokeInvitationsByEmail email=%s", email)
+		// Disable user account (create if not exists)
+		var user models.User
+		res := db.Where("email = ?", email).Limit(1).Find(&user)
+		if res.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to lookup user"})
+			return
+		}
+		if res.RowsAffected == 0 {
+			// No user exists; create a disabled user record so UI correctly reflects revoked state
+			user = models.User{Email: email, Role: "user", Disabled: true}
+			if err := db.Create(&user).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create disabled user"})
+				return
+			}
+		} else {
+			if user.Disabled {
+				if c.GetHeader("HX-Request") == "true" {
+					c.Header("HX-Reswap", "none")
+					c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(`<div id="invite-error" hx-swap-oob="true">User already revoked</div>`))
+					return
+				}
+				c.JSON(http.StatusBadRequest, gin.H{"error": "user already revoked"})
+				return
+			}
+			user.Disabled = true
+			if err := db.Save(&user).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to disable user"})
+				return
+			}
+		}
+		// Revoke all invitations for the email
+		db.Model(&models.Invitation{}).Where("email = ? AND status <> ?", email, "revoked").Update("status", "revoked")
+		// Return refreshed tbody with all invites
+		if c.GetHeader("HX-Request") == "true" {
+			var invites []models.Invitation
+			db.Order("created_at desc").Limit(200).Find(&invites)
+			c.HTML(http.StatusOK, "admin_invites_body.html", gin.H{"invites": buildInviteRows(db, invites)})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"email": email, "revoked": true})
 	}
 }
 

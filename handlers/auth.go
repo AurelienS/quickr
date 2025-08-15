@@ -57,8 +57,8 @@ func generateToken(n int) (string, error) {
 	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
-// RequireAuth middleware validates the JWT session cookie
-func RequireAuth() gin.HandlerFunc {
+// RequireAuth middleware validates the JWT session cookie and ensures the user is not disabled
+func RequireAuth(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cookie, err := c.Cookie(cookieName)
 		if err != nil || strings.TrimSpace(cookie) == "" {
@@ -89,6 +89,17 @@ func RequireAuth() gin.HandlerFunc {
 		if !ok {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid session"})
 			return
+		}
+
+		// Check if the user has been disabled (revoked at the account level)
+		var user models.User
+		if err := db.Where("email = ?", claims.Subject).First(&user).Error; err == nil {
+			if user.Disabled {
+				// Invalidate cookie and reject
+				c.SetCookie(cookieName, "", -1, "/", "", true, true)
+				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "account revoked"})
+				return
+			}
 		}
 		// set context
 		c.Set("userEmail", claims.Subject)

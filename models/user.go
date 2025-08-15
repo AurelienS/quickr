@@ -10,4 +10,5 @@ type User struct {
 	Role      string    `gorm:"not null;default:user"`
 	CreatedAt time.Time
 	LastLogin time.Time
+	Disabled  bool      `gorm:"not null;default:false"`
 }
