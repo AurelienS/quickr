@@ -6,7 +6,22 @@
 	<title>Admin - Quickr</title>
 	<script src="https://cdn.tailwindcss.com"></script>
 	<script>
-		tailwind.config = { darkMode: 'class' }
+		tailwind.config = {
+			darkMode: 'class',
+			theme: {
+				extend: {
+					colors: {
+						dark: {
+							bg: '#1a1b1e',
+							surface: '#25262b',
+							border: '#2c2e33',
+							text: '#c1c2c5',
+							primary: '#5c7cfa'
+						}
+					}
+				}
+			}
+		}
 	</script>
 	<script src="https://unpkg.com/htmx.org@1.9.10"></script>
 	<script src="/static/js/theme.js"></script>
