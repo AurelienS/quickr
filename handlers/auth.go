@@ -172,7 +172,7 @@ func RequestMagicLink(db *gorm.DB, rateLimiter *IPLimiter, mailer *SendinblueCli
 
 		// must be previously invited, except allow bootstrap for admin email
 		var inv models.Invitation
-		err := db.Where("email = ? AND status IN ? AND expires_at > ?", email, []string{"pending", "sent"}, time.Now()).Order("created_at desc").First(&inv).Error
+		err := db.Where("email = ? AND status <> ?", email, "revoked").Order("created_at desc").First(&inv).Error
 		if err != nil {
 			if strings.EqualFold(email, getAdminEmail()) {
 				inv = models.Invitation{Email: email, Status: "pending", ExpiresAt: time.Now().Add(7 * 24 * time.Hour)}
