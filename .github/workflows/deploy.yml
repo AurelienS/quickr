@@ -29,5 +29,24 @@ jobs:
             cd /mnt/data/quickr
             git fetch origin
             git reset --hard origin/prod
+            # Verify required secrets are present (do not print values)
+            missing=0
+            for v in APP_BASE_URL JWT_SECRET ADMIN_EMAIL SENDINBLUE_API_KEY SENDER_EMAIL SENDER_NAME BREVO_API_BASE; do
+              if ! printenv "$v" >/dev/null 2>&1; then
+                echo "Missing required secret: $v" >&2
+                missing=1
+              fi
+            done
+            if [ "$missing" = "1" ]; then
+              echo "Aborting deploy due to missing secrets." >&2
+              exit 1
+            fi
             docker compose down
+            APP_BASE_URL="$APP_BASE_URL" \
+            JWT_SECRET="$JWT_SECRET" \
+            ADMIN_EMAIL="$ADMIN_EMAIL" \
+            SENDINBLUE_API_KEY="$SENDINBLUE_API_KEY" \
+            SENDER_EMAIL="$SENDER_EMAIL" \
+            SENDER_NAME="$SENDER_NAME" \
+            BREVO_API_BASE="$BREVO_API_BASE" \
             docker compose up -d --build
