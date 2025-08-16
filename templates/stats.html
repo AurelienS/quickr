@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ .title }} - Quickr</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/app.css">
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -31,7 +32,7 @@
         .htmx-request.htmx-indicator { opacity: 1; }
     </style>
 </head>
-<body class="h-full bg-gray-50 dark:bg-dark-bg dark:text-dark-text">
+<body class="h-full bg-gray-50 dark:bg-dark-bg dark:text-dark-text" hx-boost="true">
     <div class="min-h-full">
         <!-- Navigation -->
         <nav class="bg-white shadow dark:bg-dark-surface dark:border-b dark:border-dark-border">
@@ -41,17 +42,26 @@
                         <div class="flex flex-shrink-0 items-center">
                             <a href="/" class="text-2xl font-bold text-indigo-600 dark:text-dark-primary">Quickr</a>
                         </div>
-                        <div class="ml-6 flex space-x-8">
-                            <a href="/" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "home" }}border-indigo-500 text-gray-900 dark:text-white dark:border-dark-primary{{ else }}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{{ end }}">
-                                Home
-                            </a>
-                            <a href="/hot" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "hot" }}border-indigo-500 text-gray-900 dark:text-white dark:border-dark-primary{{ else }}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{{ end }}">
-                                Hot
-                            </a>
-                            <a href="/stats" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "stats" }}border-indigo-500 text-gray-900 dark:text-white dark:border-dark-primary{{ else }}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{{ end }}">
-                                Stats
-                            </a>
-                        </div>
+                                                 <div class="ml-6 flex items-center space-x-8">
+                             <a href="/" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "home" }}border-indigo-500 text-gray-900 dark:text-white dark:border-dark-primary{{ else }}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{{ end }}">
+                                 Home
+                             </a>
+                             <a href="/hot" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "hot" }}border-indigo-500 text-gray-900 dark:text-white dark:border-dark-primary{{ else }}border-transparent text-gray-500 hover;border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{{ end }}">
+                                 Hot
+                             </a>
+                             <a href="/stats" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "stats" }}border-indigo-500 text-gray-900 dark:text-white dark:border-dark-primary{{ else }}border-transparent text-gray-500 hover;border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{{ end }}">
+                                 Stats
+                             </a>
+                             {{ if .isAdmin }}
+                             <a href="/admin" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                 Admin
+                             </a>
+                             {{ end }}
+                                                           <form method="POST" action="/logout" style="display:inline">
+                                  <button class="text-blue-600" type="submit">Logout</button>
+                              </form>
+                              <span class="text-xs text-gray-500">{{ .userEmail }}</span>
+                         </div>
                     </div>
                     <button type="button"
                         onclick="toggleTheme()"
@@ -80,15 +90,15 @@
 
                     <!-- Stats Overview -->
                     <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
-                        <div class="overflow-hidden rounded-lg bg-white dark:bg-dark-surface px-4 py-5 shadow sm:p-6">
+                        <div class="overflow-hidden card px-4 py-5 sm:p-6">
                             <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">Total Links</dt>
                             <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ .totalLinks }}</dd>
                         </div>
-                        <div class="overflow-hidden rounded-lg bg-white dark:bg-dark-surface px-4 py-5 shadow sm:p-6">
+                        <div class="overflow-hidden card px-4 py-5 sm:p-6">
                             <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">Total Clicks</dt>
                             <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ .totalClicks }}</dd>
                         </div>
-                        <div class="overflow-hidden rounded-lg bg-white dark:bg-dark-surface px-4 py-5 shadow sm:p-6">
+                        <div class="overflow-hidden card px-4 py-5 sm:p-6">
                             <dt class="truncate text-sm font-medium text-gray-500 dark:text-gray-400">Active Users</dt>
                             <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">{{ .activeUsers }}</dd>
                         </div>
@@ -97,7 +107,7 @@
                     <!-- Top Links -->
                     <div class="mt-8">
                         <h2 class="text-lg font-medium text-gray-900 dark:text-white">Top Links</h2>
-                        <div class="mt-4 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg dark:ring-dark-border">
+                        <div class="mt-4 overflow-hidden table-shell dark:ring-dark-border">
                             <table class="min-w-full divide-y divide-gray-300 dark:divide-dark-border">
                                 <thead class="bg-gray-50 dark:bg-dark-surface">
                                     <tr>

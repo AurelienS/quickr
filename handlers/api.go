@@ -10,14 +10,12 @@ import (
 )
 
 type CreateLinkRequest struct {
-	Alias       string `json:"alias" binding:"required"`
-	URL         string `json:"url" binding:"required"`
-	CreatorName string `json:"creator_name" binding:"required"`
+	Alias string `json:"alias" binding:"required"`
+	URL   string `json:"url" binding:"required"`
 }
 
 type UpdateLinkRequest struct {
-	URL         string `json:"url" binding:"required"`
-	CreatorName string `json:"creator_name" binding:"required"`
+	URL string `json:"url" binding:"required"`
 }
 
 // Validation helper
@@ -42,14 +40,17 @@ func ListLinks(db *gorm.DB) gin.HandlerFunc {
 // POST /api/links
 func CreateLink(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Get current user email from context
+		emailVal, _ := c.Get("userEmail")
+		creatorEmail, _ := emailVal.(string)
+
 		// Check if it's an HTMX request
 		if c.GetHeader("HX-Request") == "true" {
 			// Parse form data
 			alias := c.PostForm("alias")
 			url := c.PostForm("url")
-			creatorName := c.PostForm("creator_name")
 
-			if alias == "" || url == "" || creatorName == "" {
+			if alias == "" || url == "" {
 				c.String(http.StatusBadRequest, "All fields are required")
 				return
 			}
@@ -70,7 +71,7 @@ func CreateLink(db *gorm.DB) gin.HandlerFunc {
 			link := models.Link{
 				Alias:       alias,
 				URL:         url,
-				CreatorName: creatorName,
+				CreatorName: creatorEmail,
 			}
 
 			if err := db.Create(&link).Error; err != nil {
@@ -106,7 +107,7 @@ func CreateLink(db *gorm.DB) gin.HandlerFunc {
 		link := models.Link{
 			Alias:       req.Alias,
 			URL:         req.URL,
-			CreatorName: req.CreatorName,
+			CreatorName: creatorEmail,
 		}
 
 		if err := db.Create(&link).Error; err != nil {
@@ -155,6 +156,10 @@ func UpdateLink(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 
+		// Determine editor
+		emailVal, _ := c.Get("userEmail")
+		editorEmail, _ := emailVal.(string)
+
 		var link models.Link
 		if err := db.First(&link, id).Error; err != nil {
 			c.String(http.StatusNotFound, "Link not found")
@@ -178,6 +183,11 @@ func UpdateLink(db *gorm.DB) gin.HandlerFunc {
 				return
 			}
 			link.URL = url
+		}
+
+		// Update last editor as creatorName
+		if editorEmail != "" {
+			link.CreatorName = editorEmail
 		}
 
 		if err := db.Save(&link).Error; err != nil {

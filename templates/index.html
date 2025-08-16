@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ .title }} - Quickr</title>
     <script src="https://cdn.tailwindcss.com"></script>
+
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -31,18 +32,17 @@
         .htmx-request.htmx-indicator { opacity: 1; }
         tr.htmx-swapping { opacity: 0; transition: opacity 300ms ease-out; }
         /* Force block display but keep opacity transition */
-        .htmx-indicator.\!block {
+        .htmx-indicator.block-force {
             display: inline-flex !important;
             width: 0;
             overflow: hidden;
         }
-        .htmx-request .htmx-indicator.\!block {
+        .htmx-request .htmx-indicator.block-force {
             width: 1rem;
-            margin-right: 0.5rem;
         }
     </style>
 </head>
-<body class="h-full bg-gray-50 dark:bg-dark-bg dark:text-dark-text">
+<body class="h-full bg-gray-50 dark:bg-dark-bg text-gray-900 dark:text-dark-text" hx-boost="true">
     <div class="min-h-full">
         <!-- Navigation -->
         <nav class="bg-white shadow dark:bg-dark-surface dark:border-b dark:border-dark-border">
@@ -52,16 +52,17 @@
                         <div class="flex flex-shrink-0 items-center">
                             <a href="/" class="text-2xl font-bold text-indigo-600 dark:text-dark-primary">Quickr</a>
                         </div>
-                        <div class="ml-6 flex space-x-8">
-                            <a href="/" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "home" }}border-indigo-500 text-gray-900 dark:text-white dark:border-dark-primary{{ else }}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{{ end }}">
-                                Home
-                            </a>
-                            <a href="/hot" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "hot" }}border-indigo-500 text-gray-900 dark:text-white dark:border-dark-primary{{ else }}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{{ end }}">
-                                Hot
-                            </a>
-                            <a href="/stats" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "stats" }}border-indigo-500 text-gray-900 dark:text-white dark:border-dark-primary{{ else }}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{{ end }}">
-                                Stats
-                            </a>
+                        <div class="ml-6 flex items-center space-x-8">
+                            <a href="/" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "home" }}border-indigo-500 text-gray-900 dark:text-white dark:border-dark-primary{{ else }}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{{ end }}" >Home</a>
+                            <a href="/hot" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "hot" }}border-indigo-500 text-gray-900 dark:text-white dark:border-dark-primary{{ else }}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{{ end }}" >Hot</a>
+                            <a href="/stats" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "stats" }}border-indigo-500 text-gray-900 dark:text-white dark:border-dark-primary{{ else }}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{{ end }}" >Stats</a>
+                            {{ if .isAdmin }}
+                            <a href="/admin" class="inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium {{ if eq .active "admin" }}border-indigo-500 text-gray-900 dark:text-white dark:border-dark-primary{{ else }}border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200{{ end }}" >Admin</a>
+                            {{ end }}
+                            <form method="POST" action="/logout" style="display:inline">
+                                <button class="text-blue-600" type="submit">Logout</button>
+                            </form>
+                            <span class="text-xs text-gray-500">{{ .userEmail }}</span>
                         </div>
                     </div>
                     <button type="button"
@@ -80,7 +81,7 @@
 
         <!-- Main content -->
         <main>
-            <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+            <div id="app-content" class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
                 <div class="px-4 sm:px-6 lg:px-8">
                     <div class="sm:flex sm:items-center">
                         <div class="sm:flex-auto">
@@ -88,7 +89,7 @@
                             <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">A list of all shortened links in the system.</p>
                         </div>
                         <div class="mt-4 sm:mt-0 w-full sm:w-auto">
-                            <div class="relative">
+                            <div class="relative overflow-hidden rounded-lg bg-white dark:bg-dark-surface ring-1 ring-black/5 dark:ring-dark-border px-4 py-3">
                                 <input type="search"
                                     name="q"
                                     class="block w-full rounded-md border-0 py-2 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-dark-surface dark:ring-dark-border dark:text-white dark:placeholder:text-gray-500"
@@ -96,67 +97,48 @@
                                     hx-get="/api/search"
                                     hx-trigger="keyup changed delay:300ms, search"
                                     hx-target="#links-table tbody"
-                                    hx-swap="innerHTML"
-                                    hx-indicator="#search-indicator">
-                                <div id="search-indicator" class="htmx-indicator absolute inset-y-0 right-0 flex items-center pr-3">
-                                    <svg class="animate-spin h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                </div>
+                                    hx-swap="innerHTML" />
                             </div>
                         </div>
                     </div>
 
                     <!-- Create Link Form -->
-                    <div class="mt-8 overflow-hidden bg-white shadow sm:rounded-lg dark:bg-dark-surface">
-                        <div class="px-4 py-5 sm:p-6">
-                            <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">Create New Link</h3>
-                            <div class="mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-400">
-                                <p>Enter the details for your new shortened link.</p>
+                    <div class="mt-6">
+                        <form class="flex flex-col gap-3 sm:flex-row sm:gap-4"
+                            hx-post="/api/links"
+                            hx-target="#links-table tbody"
+                            hx-swap="afterbegin"
+                            hx-on::after-request="if(event.detail.successful) this.reset()"
+                            hx-indicator="#create-indicator">
+                            <div class="w-full sm:max-w-xs">
+                                <label for="alias" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:sr-only">Alias</label>
+                                <input type="text" name="alias" id="alias" required
+                                    class="block w-full rounded-md border-0 py-2 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-dark-surface dark:ring-dark-border dark:text-white dark:placeholder:text-gray-500"
+                                    placeholder="Alias (e.g. my-link)">
                             </div>
-                            <form class="mt-5 flex flex-col sm:flex-row sm:items-center gap-4"
-                                hx-post="/api/links"
-                                hx-target="#links-table tbody"
-                                hx-swap="afterbegin swap:300ms"
-                                hx-on::after-request="if(event.detail.successful) this.reset()"
+                            <div class="w-full sm:max-w-xs">
+                                <label for="url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:sr-only">URL</label>
+                                <input type="url" name="url" id="url" required
+                                    class="block w-full rounded-md border-0 py-2 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-dark-surface dark:ring-dark-border dark:text-white dark:placeholder:text-gray-500"
+                                    placeholder="URL (e.g. https://example.com)">
+                            </div>
+                            <button type="submit"
+                                class="mt-3 inline-flex h-10 items-center justify-center rounded-md bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:ml-4 sm:mt-0 dark:bg-dark-primary dark:hover:bg-indigo-700"
                                 hx-indicator="#create-indicator">
-                                <div class="w-full sm:max-w-xs">
-                                    <label for="alias" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:sr-only">Alias</label>
-                                    <input type="text" name="alias" id="alias" required
-                                        class="block w-full rounded-md border-0 py-2 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-dark-surface dark:ring-dark-border dark:text-white dark:placeholder:text-gray-500"
-                                        placeholder="Alias (e.g. my-link)">
-                                </div>
-                                <div class="w-full sm:max-w-xs">
-                                    <label for="url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:sr-only">URL</label>
-                                    <input type="url" name="url" id="url" required
-                                        class="block w-full rounded-md border-0 py-2 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-dark-surface dark:ring-dark-border dark:text-white dark:placeholder:text-gray-500"
-                                        placeholder="URL (e.g. https://example.com)">
-                                </div>
-                                <div class="w-full sm:max-w-xs">
-                                    <label for="creator_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 sm:sr-only">Creator</label>
-                                    <input type="text" name="creator_name" id="creator_name" required
-                                        class="block w-full rounded-md border-0 py-2 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-dark-surface dark:ring-dark-border dark:text-white dark:placeholder:text-gray-500"
-                                        placeholder="Your name">
-                                </div>
-                                <button type="submit"
-                                    class="mt-3 inline-flex h-10 items-center justify-center rounded-md bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:ml-4 sm:mt-0 dark:bg-dark-primary dark:hover:bg-indigo-700"
-                                    hx-indicator="#create-indicator">
-                                    <span id="create-indicator" class="htmx-indicator mr-2 !block">
-                                        <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                    </span>
-                                    Create Link
-                                </button>
-                            </form>
-                            <div id="form-error" class="mt-2 text-sm text-red-600 dark:text-red-400 hidden"></div>
-                        </div>
+                                <span id="create-indicator" class="htmx-indicator mr-2 !block">
+                                    <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </span>
+                                Create Link
+                            </button>
+                        </form>
+                        <div id="form-error" class="mt-2 text-sm text-red-600 dark:text-red-400 hidden"></div>
                     </div>
 
                     <!-- Links Table -->
-                    <div class="mt-8 overflow-hidden bg-white shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg dark:bg-dark-surface dark:ring-dark-border">
+                    <div class="mt-8 overflow-hidden bg-white dark:bg-dark-surface shadow ring-1 ring-black/5 sm:rounded-lg dark:ring-dark-border">
                         <table class="min-w-full divide-y divide-gray-300 dark:divide-dark-border" id="links-table">
                             <thead class="bg-gray-50 dark:bg-dark-surface">
                                 <tr>
@@ -164,133 +146,43 @@
                                     <th scope="col" class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">URL</th>
                                     <th scope="col" class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Clicks</th>
                                     <th scope="col" class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Creator</th>
-                                    <th scope="col" class="hidden sm:table-cell px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Created</th>
                                     <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
                                         <span class="sr-only">Actions</span>
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-200 dark:divide-dark-border">
-                                            <template id="no-results">
-                                                <tr>
-                                                    <td colspan="6" class="px-3 py-4 text-sm text-gray-500 dark:text-gray-400 text-center">
-                                                        No links found matching your search.
-                                                    </td>
-                                                </tr>
-                                            </template>
-                                            {{ range .links }}
-                                            <tr id="link-{{ .ID }}">
-                                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-indigo-600 dark:text-dark-primary sm:pl-6" data-id="{{ .ID }}" data-field="alias">
-                                                    <div class="flex items-center justify-between gap-2 min-w-[200px] h-[26px]">
-                                                        <a href="/go/{{ .Alias }}" class="cursor-pointer hover:text-indigo-500 dark:hover:text-indigo-400 flex-1"
-                                                            hx-get="/api/links/{{ .ID }}/edit?field=alias"
-                                                            hx-trigger="click"
-                                                            hx-target="closest td"
-                                                            hx-swap="outerHTML"
-                                                            onclick="event.preventDefault()">
-                                                            {{ .Alias }}
-                                                        </a>
-                                                        <button type="button"
-                                                            class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 copy-button"
-                                                            data-url="{{ .Alias }}"
-                                                            title="Copier le lien">
-                                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                                                            </svg>
-                                                        </button>
-                                                        <div class="copy-notification hidden fixed bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg text-sm dark:bg-gray-700">
-                                                            Lien copié !
-                                                        </div>
-                                                    </div>
-                                                    <!-- Mobile view details -->
-                                                    <div class="sm:hidden mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                                        <div class="truncate">{{ .URL }}</div>
-                                                        <div class="flex justify-between mt-1">
-                                                            <span>{{ .Clicks }} clicks</span>
-                                                            <span>{{ .CreatorName }}</span>
-                                                        </div>
-                                                        <div class="text-right text-xs">{{ .CreatedAt.Format "2006-01-02" }}</div>
-                                                    </div>
-                                                </td>
-                                                <td class="hidden sm:table-cell whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400" data-id="{{ .ID }}" data-field="url">
-                                                    <div class="flex items-center justify-between gap-2 min-w-[300px] h-[26px]">
-                                                        <span class="cursor-pointer hover:text-gray-900 dark:hover:text-white flex-1 truncate"
-                                                            hx-get="/api/links/{{ .ID }}/edit?field=url"
-                                                            hx-trigger="click"
-                                                            hx-target="closest td"
-                                                            hx-swap="outerHTML">
-                                                            {{ .URL }}
-                                                        </span>
-                                                        <a href="/go/{{ .Alias }}" target="_blank" class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 shrink-0">
-                                                            <svg class="inline-block h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                                            </svg>
-                                                        </a>
-                                                    </div>
-                                                </td>
-                                                <td class="hidden sm:table-cell whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">{{ .Clicks }}</td>
-                                                <td class="hidden sm:table-cell whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">{{ .CreatorName }}</td>
-                                                <td class="hidden sm:table-cell whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">{{ .CreatedAt.Format "2006-01-02" }}</td>
-                                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                                    <button type="button" class="text-red-600 hover:text-red-900 dark:text-red-500 dark:hover:text-red-400"
-                                                        onclick="showDeleteModal('{{ .ID }}', '{{ .Alias }}')">
-                                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                        </svg>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            {{ end }}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
+                            <tbody class="divide-y divide-gray-200 bg-white dark:bg-dark-surface dark:divide-dark-border">
+                                {{ template "link_rows.html" . }}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Delete Confirmation Modal -->
-    <div id="deleteModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 hidden" aria-hidden="true" data-link-id="">
-        <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
-            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                <div class="relative transform overflow-hidden rounded-lg bg-white dark:bg-dark-surface px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
-                    <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900 sm:mx-0 sm:h-10 sm:w-10">
-                            <svg class="h-6 w-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                            </svg>
-                        </div>
-                        <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
-                            <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">Delete Link</h3>
-                            <div class="mt-2">
-                                <p class="text-sm text-gray-500 dark:text-gray-400">
-                                    Are you sure you want to delete the link "<span id="deleteAlias"></span>"? This action cannot be undone.
-                                </p>
-                            </div>
+    <!-- Delete Modal and scripts remain -->
+    <div id="delete-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white dark:bg-dark-surface rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 20h.01M17 8l-5 5-5-5" />
+                        </svg>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">Delete Link</h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Are you sure you want to delete <span id="delete-alias" class="font-semibold"></span>? This action cannot be undone.</p>
                         </div>
                     </div>
-                    <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
-                        <button type="button"
-                            class="inline-flex h-10 w-full justify-center items-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 dark:bg-red-700 dark:hover:bg-red-600 sm:ml-3 sm:w-auto"
-                            onclick="deleteLink()"
-                            hx-indicator="#delete-indicator">
-                            <span id="delete-indicator" class="htmx-indicator mr-2 !block">
-                                <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                            </span>
-                            Delete
-                        </button>
-                        <button type="button"
-                            onclick="hideDeleteModal()"
-                            class="mt-3 inline-flex h-10 w-full justify-center rounded-md bg-white dark:bg-dark-surface px-3 py-2 text-sm font-semibold text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-dark-border hover:bg-gray-50 dark:hover:bg-gray-700 sm:mt-0 sm:w-auto">
-                            Cancel
-                        </button>
-                    </div>
+                </div>
+                <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                    <button id="confirm-delete" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm">Delete</button>
+                    <button type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white dark:bg-dark-surface text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm" onclick="hideDeleteModal()">Cancel</button>
                 </div>
             </div>
         </div>
@@ -388,24 +280,16 @@
 
     // Delete modal functions
     function showDeleteModal(id, alias) {
-        const modal = document.getElementById('deleteModal');
-        const aliasSpan = document.getElementById('deleteAlias');
-
-        modal.classList.remove('hidden');
-        modal.dataset.linkId = id;
-        aliasSpan.textContent = alias;
+        document.getElementById('delete-alias').textContent = alias;
+        document.getElementById('confirm-delete').setAttribute('onclick', `deleteLink(${id})`);
+        document.getElementById('delete-modal').classList.remove('hidden');
     }
 
     function hideDeleteModal() {
-        const modal = document.getElementById('deleteModal');
-        modal.classList.add('hidden');
-        modal.dataset.linkId = '';
+        document.getElementById('delete-modal').classList.add('hidden');
     }
 
-    function deleteLink() {
-        const modal = document.getElementById('deleteModal');
-        const id = modal.dataset.linkId;
-
+    function deleteLink(id) {
         htmx.ajax('DELETE', `/api/links/${id}`, {
             target: '#links-table tbody',
             swap: 'innerHTML'

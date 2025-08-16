@@ -1,0 +1,7 @@
+{{define "admin_invites_body.html"}}
+<tbody id="invites-body" class="divide-y divide-gray-200 dark:divide-dark-border">
+	{{range .invites}}
+		{{template "admin_invite_row.html" .}}
+	{{end}}
+</tbody>
+{{end}}

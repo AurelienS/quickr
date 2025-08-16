@@ -1,0 +1,40 @@
+{{define "login.html"}}
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Sign in</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<script>
+		tailwind.config = {
+			darkMode: 'class',
+			theme: {
+				extend: {
+					colors: {
+						dark: {
+							bg: '#1a1b1e',
+							surface: '#25262b',
+							border: '#2c2e33',
+							text: '#c1c2c5',
+							primary: '#5c7cfa'
+						}
+					}
+				}
+			}
+		}
+	</script>
+	<script src="/static/js/theme.js"></script>
+</head>
+<body class="h-full min-h-screen bg-gray-50 dark:bg-dark-bg dark:text-dark-text flex items-center justify-center p-6">
+	<div class="w-full max-w-md bg-white dark:bg-dark-surface dark:border dark:border-dark-border rounded-lg shadow p-6">
+		<h1 class="text-2xl font-bold mb-2">Sign in</h1>
+		<p class="text-sm text-gray-600 dark:text-gray-300 mb-4">Enter your invited email. We'll email a one-time sign-in link.</p>
+		<form method="POST" action="/login" class="space-y-4">
+			<input type="email" name="email" placeholder="you@example.com" required class="w-full border dark:border-dark-border bg-white dark:bg-dark-bg text-gray-900 dark:text-dark-text rounded px-3 py-2" />
+			<button type="submit" class="w-full bg-indigo-600 text-white rounded px-4 py-2">Send magic link</button>
+		</form>
+	</div>
+</body>
+</html>
+{{end}}

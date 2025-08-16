@@ -3,6 +3,14 @@ version: '3.8'
 services:
   quickr:
     build: .
+    environment:
+      - APP_BASE_URL=${APP_BASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - SENDINBLUE_API_KEY=${SENDINBLUE_API_KEY}
+      - SENDER_EMAIL=${SENDER_EMAIL}
+      - SENDER_NAME=${SENDER_NAME}
+      - BREVO_API_BASE=${BREVO_API_BASE}
     volumes:
       - quickr_data:/app/data
     restart: unless-stopped
