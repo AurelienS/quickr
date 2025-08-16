@@ -2,6 +2,8 @@
 
 A modern URL shortener built with Go, featuring a clean UI with HTMX for dynamic interactions.
 
+_This app was vibe-coded end-to-end — my human trusted me._
+
 ## Screenshots
 
 <img width="526" height="411" alt="image" src="https://github.com/user-attachments/assets/0d45aa77-7bd5-4421-9d65-5423af81a35b" />
@@ -16,6 +18,13 @@ A modern URL shortener built with Go, featuring a clean UI with HTMX for dynamic
 - **Statistics**: Track clicks and view usage statistics
 - **Hot Links**: View trending links over different time periods
 - **Dark Mode**: Built-in dark mode support
+
+## Browser Extension: quickr-jump
+
+Get to your short URLs even faster with the quickr-jump browser extension — Faster than Quickr!
+
+- **What it is**: A Firefox & Chrome extension to use Quickr faster
+- **Source**: [AurelienS/quickr-jump](https://github.com/AurelienS/quickr-jump)
 
 ## Tech Stack
 
