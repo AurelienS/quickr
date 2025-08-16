@@ -12,20 +12,22 @@ jobs:
     steps:
       - name: SSH Deploy
         uses: appleboy/ssh-action@v0.1.7
+        env:
+          APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          SENDINBLUE_API_KEY: ${{ secrets.SENDINBLUE_API_KEY }}
+          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+          SENDER_NAME: ${{ secrets.SENDER_NAME }}
+          BREVO_API_BASE: ${{ secrets.BREVO_API_BASE }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ubuntu
           key: ${{ secrets.VPS_SSH_KEY }}
+          envs: APP_BASE_URL,JWT_SECRET,ADMIN_EMAIL,SENDINBLUE_API_KEY,SENDER_EMAIL,SENDER_NAME,BREVO_API_BASE
           script: |
             cd /mnt/data/quickr
             git fetch origin
             git reset --hard origin/prod
-            export APP_BASE_URL=${{ secrets.APP_BASE_URL }}
-            export JWT_SECRET=${{ secrets.JWT_SECRET }}
-            export ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
-            export SENDINBLUE_API_KEY=${{ secrets.SENDINBLUE_API_KEY }}
-            export SENDER_EMAIL=${{ secrets.SENDER_EMAIL }}
-            export SENDER_NAME=${{ secrets.SENDER_NAME }}
-            export BREVO_API_BASE=${{ secrets.BREVO_API_BASE }}
             docker compose down
             docker compose up -d --build
