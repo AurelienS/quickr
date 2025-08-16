@@ -7,19 +7,20 @@ on:
 
 jobs:
   deploy:
+    environment: prod
     runs-on: ubuntu-latest
 
     steps:
       - name: SSH Deploy
         uses: appleboy/ssh-action@v0.1.7
         env:
-          APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
+          APP_BASE_URL: ${{ secrets.APP_BASE_URL || vars.APP_BASE_URL }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
           SENDINBLUE_API_KEY: ${{ secrets.SENDINBLUE_API_KEY }}
-          SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
-          SENDER_NAME: ${{ secrets.SENDER_NAME }}
-          BREVO_API_BASE: ${{ secrets.BREVO_API_BASE }}
+          SENDER_EMAIL: ${{ vars.SENDER_EMAIL || secrets.SENDER_EMAIL }}
+          SENDER_NAME: ${{ vars.SENDER_NAME || secrets.SENDER_NAME }}
+          BREVO_API_BASE: ${{ secrets.BREVO_API_BASE || vars.BREVO_API_BASE }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ubuntu
@@ -31,10 +32,16 @@ jobs:
             git reset --hard origin/prod
             # Verify required secrets are present (do not print values)
             missing=0
-            for v in APP_BASE_URL JWT_SECRET ADMIN_EMAIL SENDINBLUE_API_KEY SENDER_EMAIL SENDER_NAME BREVO_API_BASE; do
+            for v in JWT_SECRET ADMIN_EMAIL; do
               if ! printenv "$v" >/dev/null 2>&1; then
                 echo "Missing required secret: $v" >&2
                 missing=1
+              fi
+            done
+            # Optional (warn only)
+            for v in APP_BASE_URL SENDINBLUE_API_KEY SENDER_EMAIL SENDER_NAME BREVO_API_BASE; do
+              if ! printenv "$v" >/dev/null 2>&1; then
+                echo "Warning: optional variable not set: $v" >&2
               fi
             done
             if [ "$missing" = "1" ]; then
