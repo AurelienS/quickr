@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+# Enforce concise Conventional Commits.
+# Pattern: <type>(<optional-scope>)!: <subject>
+# Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+
+commit_msg_file="$1"
+
+# Skip for merge commits
+if grep -qE '^Merge ' "$commit_msg_file"; then
+	exit 0
+fi
+
+# Remove comment lines
+filtered=$(grep -vE '^#' "$commit_msg_file")
+
+subject=$(printf "%s" "$filtered" | head -n1)
+body=$(printf "%s" "$filtered" | tail -n +2)
+
+# Allow empty subject only if this is an amend of a merge; otherwise enforce
+if [ -z "$subject" ]; then
+	echo "Commit message must start with a subject line." >&2
+	echo "Use Conventional Commits, e.g.: feat(api): add password reset" >&2
+	exit 1
+fi
+
+# Enforce Conventional Commit subject format
+if ! echo "$subject" | grep -qE '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9\-\/]+\))?(!)?: [^ ].+'; then
+	echo "Subject must follow Conventional Commits. Examples:" >&2
+	echo "  feat(auth): add password reset via email" >&2
+	echo "  fix(mailer): retry on temporary SMTP 421 errors" >&2
+	exit 1
+fi
+
+# Enforce max subject length (72) and no trailing period
+subject_len=${#subject}
+if [ "$subject_len" -gt 72 ]; then
+	echo "Subject too long ($subject_len). Keep it ≤ 72 characters." >&2
+	exit 1
+fi
+if echo "$subject" | grep -qE '\.$'; then
+	echo "Remove trailing period from the subject line." >&2
+	exit 1
+fi
+
+# Keep messages concise by default: at most 2 non-empty body lines
+non_empty_body_lines=$(printf "%s\n" "$body" | grep -vE '^[[:space:]]*$' | grep -vE '^(BREAKING CHANGE:|Refs:|Fixes:)' | wc -l | tr -d ' ')
+if [ "$non_empty_body_lines" -gt 2 ]; then
+	echo "Body is too long ($non_empty_body_lines lines). Keep it concise (≤ 2 lines)." >&2
+	echo "If needed, use a short footer like 'Refs: #123' or 'Fixes: #123'." >&2
+	exit 1
+fi
+
+exit 0
+
+

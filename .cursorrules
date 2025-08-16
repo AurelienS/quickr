@@ -1,0 +1,110 @@
+# Cursor Rules
+
+## Commit messages
+
+A good commit message following the Conventional Commits specification should have this structure:
+
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+### Required Elements
+
+#### Type
+Must be one of these standard types:
+
+| Type | Description |
+|------|-------------|
+| `feat` | A new feature for the user |
+| `fix` | A bug fix |
+| `docs` | Documentation only changes |
+| `style` | Changes that don't affect code meaning (white-space, formatting, etc.) |
+| `refactor` | Code change that neither fixes a bug nor adds a feature |
+| `perf` | A code change that improves performance |
+| `test` | Adding missing tests or correcting existing tests |
+| `chore` | Changes to the build process or auxiliary tools |
+| `ci` | Changes to CI configuration files and scripts |
+| `build` | Changes that affect the build system or external dependencies |
+| `revert` | Reverts a previous commit |
+DO NOT FORGET THE TYPE
+#### Description
+A short summary of the code change:
+- Use imperative mood ("add" not "added" or "adds")
+- Don't capitalize the first letter
+- No period at the end
+- Keep it under 50 characters when possible
+
+### Optional Elements
+
+#### Scope
+Provides context about what part of the codebase is affected:
+- Use parentheses: `feat(auth): add login validation`
+- Common scopes: component names, file names, or feature areas
+DO NOT FORGET THE SCOPE
+### Body
+Detailed explanation when the subject line isn't sufficient:
+- Separate from subject with a blank line
+- Wrap at 72 characters
+- Explain what and why, not how
+- Can include multiple paragraphs
+
+#### Footer
+Used for breaking changes and issue references:
+- `BREAKING CHANGE:` describes incompatible API changes
+- `Closes #123` or `Fixes #456` to reference issues
+
+### Examples
+
+#### Simple feature
+```
+feat: add user authentication
+```
+
+#### With scope
+```
+fix(api): resolve timeout issue in user service
+```
+
+#### With body
+```
+feat(auth): implement OAuth2 integration
+
+Add support for Google and GitHub OAuth providers.
+This allows users to sign in with their existing accounts
+instead of creating new credentials.
+```
+
+#### Breaking change
+```
+feat(api)!: change user endpoint response format
+
+BREAKING CHANGE: The user endpoint now returns a nested object
+instead of a flat structure. Update your API calls accordingly.
+
+Before: { "name": "John", "email": "john@example.com" }
+After: { "user": { "name": "John", "email": "john@example.com" } }
+```
+
+### Best Practices
+
+- ✅ Keep the first line under 50 characters
+- ✅ Use present tense, imperative mood
+- ✅ Don't end the subject line with a period
+- ✅ Separate subject from body with a blank line
+- ✅ Focus on why the change was made, not how
+- ✅ Reference issues and breaking changes in footers
+- ✅ Use `!` after type/scope to indicate breaking changes
+- ✅ Be consistent with your team's conventions
+
+### Benefits
+
+Following Conventional Commits helps with:
+- **Automated tooling** - Tools can parse and process commits automatically
+- **Changelog generation** - Generate release notes from commit history
+- **Semantic versioning** - Automatically determine version bumps
+- **Team communication** - Clear understanding of change impact and purpose
+- **Code review** - Easier to understand what changed and why
