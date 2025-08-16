@@ -30,8 +30,9 @@
 	<div class="w-full max-w-md bg-white dark:bg-dark-surface dark:border dark:border-dark-border rounded-lg shadow p-6">
 		<h1 class="text-2xl font-bold mb-2">Sign in</h1>
 		<p class="text-sm text-gray-600 dark:text-gray-300 mb-4">Enter your invited email. We'll email a one-time sign-in link.</p>
-		<form method="POST" action="/login" class="space-y-4">
-			<input type="email" name="email" placeholder="you@example.com" required class="w-full border dark:border-dark-border bg-white dark:bg-dark-bg text-gray-900 dark:text-dark-text rounded px-3 py-2" />
+		<form method="POST" action="/login" class="space-y-4" autocomplete="on">
+			<label for="email" class="block text-sm font-medium">Email</label>
+			<input id="email" type="email" name="email" autocomplete="email" inputmode="email" autocapitalize="none" autocorrect="off" spellcheck="false" autofocus placeholder="you@example.com" required class="w-full border dark:border-dark-border bg-white dark:bg-dark-bg text-gray-900 dark:text-dark-text rounded px-3 py-2" />
 			<button type="submit" class="w-full bg-indigo-600 text-white rounded px-4 py-2">Send magic link</button>
 		</form>
 	</div>
