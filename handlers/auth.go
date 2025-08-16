@@ -138,6 +138,10 @@ func RequestMagicLink(db *gorm.DB, rateLimiter *IPLimiter, mailer *SendinblueCli
 
 		email := strings.TrimSpace(strings.ToLower(c.PostForm("email")))
 		if email == "" {
+			// Some password managers submit `username` for the email field
+			email = strings.TrimSpace(strings.ToLower(c.PostForm("username")))
+		}
+		if email == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "email required"})
 			return
 		}
