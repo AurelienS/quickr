@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"errors"
 	"log"
 	"net/http"
@@ -12,7 +10,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"gorm.io/gorm"
 )
 
 // JWT cookie settings
@@ -43,16 +40,8 @@ func getAdminEmail() string {
 	return a
 }
 
-func generateToken(n int) (string, error) {
-	b := make([]byte, n)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	return base64.RawURLEncoding.EncodeToString(b), nil
-}
-
 // RequireAuth middleware validates the JWT session cookie and ensures the user is not disabled
-func (h *AppHandler) RequireAuth(db *gorm.DB) gin.HandlerFunc {
+func (h *AppHandler) RequireAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cookie, err := c.Cookie(cookieName)
 		if err != nil || strings.TrimSpace(cookie) == "" {
@@ -110,7 +99,7 @@ func (h *AppHandler) ShowLogin() gin.HandlerFunc {
 }
 
 // POST /login requests a new magic link if email was invited
-func (h *AppHandler) RequestMagicLink(db *gorm.DB) gin.HandlerFunc {
+func (h *AppHandler) RequestMagicLink() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ip := c.ClientIP()
 		if !h.RateLimiter.Allow(ip) {
@@ -159,7 +148,7 @@ func (h *AppHandler) RequestMagicLink(db *gorm.DB) gin.HandlerFunc {
 }
 
 // GET /magic redeems token, issues JWT cookie, invalidates invite
-func (h *AppHandler) RedeemMagicLink(db *gorm.DB) gin.HandlerFunc {
+func (h *AppHandler) RedeemMagicLink() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenParam := c.Query("token")
 		if tokenParam == "" {

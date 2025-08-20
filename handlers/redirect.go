@@ -5,10 +5,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
-func (h *AppHandler) HandleRedirect(db *gorm.DB) gin.HandlerFunc {
+func (h *AppHandler) HandleRedirect() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		alias := c.Param("alias")
 		log.Printf("[DEBUG] HandleRedirect called for alias: %s", alias)

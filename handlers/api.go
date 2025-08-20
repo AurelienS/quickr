@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"quickr/models"
 )
 
 type CreateLinkRequest struct {
@@ -204,10 +203,6 @@ func (h *AppHandler) DeleteLink() gin.HandlerFunc {
 func (h *AppHandler) SearchLinks() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		query := c.Query("q")
-		links, err := func() ([]models.Link, error) { return nil, nil }()
-		_ = err
-		_ = links
-		// Keep streaming behavior identical to previous implementation
 		if query == "" {
 			ls, e := h.LinkService.ListLinks()
 			if e != nil {

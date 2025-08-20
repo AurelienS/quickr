@@ -107,23 +107,23 @@ func main() {
 	userRepo := repositories.NewGormUserRepository(db)
 	invRepo := repositories.NewGormInvitationRepository(db)
 	authService := services.NewAuthService(userRepo, invRepo, mailer, appBaseURL, nil)
-	h := handlers.NewAppHandler(linkService, authService, mailer, rateLimiter, appBaseURL)
+	h := handlers.NewAppHandler(linkService, authService, rateLimiter, appBaseURL)
 
 	// Public auth routes
 	r.GET("/login", h.ShowLogin())
-	r.POST("/login", h.RequestMagicLink(db))
-	r.GET("/magic", h.RedeemMagicLink(db))
+	r.POST("/login", h.RequestMagicLink())
+	r.GET("/magic", h.RedeemMagicLink())
 	r.POST("/logout", handlers.Logout())
 
 	// Web routes (require auth)
-	r.GET("/", h.RequireAuth(db), h.HandleHome())
-	r.GET("/stats", h.RequireAuth(db), h.HandleStats())
-	r.GET("/hot", h.RequireAuth(db), h.HandleHot())
+	r.GET("/", h.RequireAuth(), h.HandleHome())
+	r.GET("/stats", h.RequireAuth(), h.HandleStats())
+	r.GET("/hot", h.RequireAuth(), h.HandleHot())
 
 	// Redirect route with debug handler (keep public)
 	r.GET("/go/:alias", func(c *gin.Context) {
 		log.Printf("[DEBUG] About to call redirect handler for alias: %s", c.Param("alias"))
-		h.HandleRedirect(db)(c)
+		h.HandleRedirect()(c)
 	})
 
 	// Root-level alias redirect. Must come after fixed routes.
@@ -133,21 +133,21 @@ func main() {
 			c.Status(http.StatusNotFound)
 			return
 		}
-		h.HandleRedirect(db)(c)
+		h.HandleRedirect()(c)
 	})
 
 	// Admin routes
-	admin := r.Group("/admin", h.RequireAuth(db), h.RequireAdmin())
+	admin := r.Group("/admin", h.RequireAuth(), h.RequireAdmin())
 	{
-		admin.GET("", h.AdminDashboard(db))
-		admin.POST("/invitations", h.CreateInvitation(db))
-		admin.POST("/invitations/:id/send", h.SendInvitation(db))
-		admin.POST("/invitations/:id/revoke", h.RevokeInvitation(db))
-		admin.POST("/invitations/revoke-email", h.RevokeInvitationsByEmail(db))
+		admin.GET("", h.AdminDashboard())
+		admin.POST("/invitations", h.CreateInvitation())
+		admin.POST("/invitations/:id/send", h.SendInvitation())
+		admin.POST("/invitations/:id/revoke", h.RevokeInvitation())
+		admin.POST("/invitations/revoke-email", h.RevokeInvitationsByEmail())
 	}
 
 	// API routes (require auth)
-	api := r.Group("/api", h.RequireAuth(db))
+	api := r.Group("/api", h.RequireAuth())
 	{
 		api.GET("/links", h.ListLinks())
 		api.POST("/links", h.CreateLink())

@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"quickr/models"
 )
 
@@ -17,7 +16,7 @@ type InviteRow struct {
 }
 
 // GET /admin renders a simple dashboard (list + create form)
-func (h *AppHandler) AdminDashboard(db *gorm.DB) gin.HandlerFunc {
+func (h *AppHandler) AdminDashboard() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		invites, _ := h.AuthService.ListInvitations(200)
 		annotated, _ := h.AuthService.AnnotateInvitesWithUserDisabled(invites)
@@ -36,7 +35,7 @@ func (h *AppHandler) AdminDashboard(db *gorm.DB) gin.HandlerFunc {
 }
 
 // POST /admin/invitations creates an invitation and sends it immediately
-func (h *AppHandler) CreateInvitation(db *gorm.DB) gin.HandlerFunc {
+func (h *AppHandler) CreateInvitation() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		email := strings.TrimSpace(strings.ToLower(c.PostForm("email")))
 		if email == "" {
@@ -64,7 +63,7 @@ func (h *AppHandler) CreateInvitation(db *gorm.DB) gin.HandlerFunc {
 }
 
 // POST /admin/invitations/:id/revoke toggles to revoked and returns row
-func (h *AppHandler) RevokeInvitation(db *gorm.DB) gin.HandlerFunc {
+func (h *AppHandler) RevokeInvitation() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		inv, err := h.AuthService.RevokeInvitationByID(id)
@@ -83,7 +82,7 @@ func (h *AppHandler) RevokeInvitation(db *gorm.DB) gin.HandlerFunc {
 }
 
 // POST /admin/invitations/revoke-email disables the user and revokes all invites for that email
-func (h *AppHandler) RevokeInvitationsByEmail(db *gorm.DB) gin.HandlerFunc {
+func (h *AppHandler) RevokeInvitationsByEmail() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		email := strings.TrimSpace(strings.ToLower(c.PostForm("email")))
 		if email == "" {
@@ -118,7 +117,7 @@ func (h *AppHandler) RevokeInvitationsByEmail(db *gorm.DB) gin.HandlerFunc {
 }
 
 // POST /admin/invitations/:id/send generates token if needed, sends email, then marks as sent
-func (h *AppHandler) SendInvitation(db *gorm.DB) gin.HandlerFunc {
+func (h *AppHandler) SendInvitation() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		base := resolveBaseURL(c.Request, h.AppBaseURL)
