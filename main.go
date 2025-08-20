@@ -120,7 +120,7 @@ func main() {
 	admin := r.Group("/admin", handlers.RequireAuth(db), handlers.RequireAdmin())
 	{
 		admin.GET("", handlers.AdminDashboard(db))
-		admin.POST("/invitations", handlers.CreateInvitation(db))
+		admin.POST("/invitations", handlers.CreateInvitation(db, mailer, appBaseURL))
 		admin.POST("/invitations/:id/send", handlers.SendInvitation(db, mailer, appBaseURL))
 		admin.POST("/invitations/:id/revoke", handlers.RevokeInvitation(db))
 		admin.POST("/invitations/revoke-email", handlers.RevokeInvitationsByEmail(db))

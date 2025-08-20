@@ -62,8 +62,8 @@ func AdminDashboard(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
-// POST /admin/invitations creates an invitation
-func CreateInvitation(db *gorm.DB) gin.HandlerFunc {
+// POST /admin/invitations creates an invitation and sends it immediately
+func CreateInvitation(db *gorm.DB, mailer *SendinblueClient, appBaseURL string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		email := strings.TrimSpace(strings.ToLower(c.PostForm("email")))
 		if email == "" {
@@ -101,6 +101,22 @@ func CreateInvitation(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 		log.Printf("[ADMIN] Invitation %d created for %s", inv.ID, inv.Email)
+
+		// Auto-send the invitation immediately
+		if inv.Status != "used" && inv.Status != "revoked" {
+			base := resolveBaseURL(c.Request, appBaseURL)
+			link := base + "/magic?token=" + inv.Token
+			log.Printf("[ADMIN] Auto-sending magic link to %s", inv.Email)
+			if err := mailer.SendMagicLink(inv.Email, link); err != nil {
+				log.Printf("[ADMIN] Auto-send failed for %s: %v", inv.Email, err)
+				// keep status as pending so admin can retry via Send
+			} else {
+				inv.Status = "sent"
+				if err := db.Save(&inv).Error; err != nil {
+					log.Printf("[ADMIN] Failed to mark invite sent id=%d: %v", inv.ID, err)
+				}
+			}
+		}
 
 		if c.GetHeader("HX-Request") == "true" {
 			var row InviteRow
@@ -232,7 +248,8 @@ func SendInvitation(db *gorm.DB, mailer *SendinblueClient, appBaseURL string) gi
 				return
 			}
 		}
-		link := appBaseURL + "/magic?token=" + inv.Token
+		base := resolveBaseURL(c.Request, appBaseURL)
+		link := base + "/magic?token=" + inv.Token
 		log.Printf("[ADMIN] Sending magic link to %s", inv.Email)
 		if err := mailer.SendMagicLink(inv.Email, link); err != nil {
 			log.Printf("[ADMIN] Send failed for %s: %v", inv.Email, err)

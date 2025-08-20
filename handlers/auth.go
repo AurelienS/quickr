@@ -209,7 +209,7 @@ func RequestMagicLink(db *gorm.DB, rateLimiter *IPLimiter, mailer *SendinblueCli
 		newInv := models.Invitation{
 			Email:     email,
 			Token:     token,
-			Status:    "sent",
+			Status:    "pending",
 			ExpiresAt: time.Now().Add(7 * 24 * time.Hour),
 		}
 		if err := db.Create(&newInv).Error; err != nil {
@@ -217,11 +217,16 @@ func RequestMagicLink(db *gorm.DB, rateLimiter *IPLimiter, mailer *SendinblueCli
 			return
 		}
 
-		link := fmt.Sprintf("%s/magic?token=%s", strings.TrimRight(appBaseURL, "/"), token)
+		// Build link using request host if available; fallback to configured base URL
+		base := resolveBaseURL(c.Request, appBaseURL)
+		link := fmt.Sprintf("%s/magic?token=%s", strings.TrimRight(base, "/"), token)
 		if err := mailer.SendMagicLink(email, link); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send email"})
 			return
 		}
+		// Mark as sent only after successful email
+		newInv.Status = "sent"
+		_ = db.Save(&newInv).Error
 		c.JSON(http.StatusOK, gin.H{"message": "Magic link sent if email is invited"})
 	}
 }
