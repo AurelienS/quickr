@@ -116,6 +116,16 @@ func main() {
 		handlers.HandleRedirect(db)(c)
 	})
 
+	// Root-level alias redirect. Must come after fixed routes.
+	r.GET("/:alias", func(c *gin.Context) {
+		alias := c.Param("alias")
+		if handlers.IsReservedAliasPublic(alias) {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		handlers.HandleRedirect(db)(c)
+	})
+
 	// Admin routes
 	admin := r.Group("/admin", handlers.RequireAuth(db), handlers.RequireAdmin())
 	{

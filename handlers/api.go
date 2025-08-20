@@ -61,6 +61,11 @@ func CreateLink(db *gorm.DB) gin.HandlerFunc {
 				return
 			}
 
+			// Prevent reserved routes
+			if isReservedAlias(alias) {
+				c.String(http.StatusBadRequest, "Alias is reserved")
+				return
+			}
 			// Check for duplicate alias (only among non-deleted links)
 			var existing models.Link
 			if err := db.Where("alias = ?", alias).First(&existing).Error; err == nil {
@@ -97,6 +102,11 @@ func CreateLink(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
+		// Prevent reserved routes
+		if isReservedAlias(req.Alias) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Alias is reserved"})
+			return
+		}
 		// Check for duplicate alias (only among non-deleted links)
 		var existing models.Link
 		if err := db.Where("alias = ?", req.Alias).First(&existing).Error; err == nil {
@@ -168,6 +178,11 @@ func UpdateLink(db *gorm.DB) gin.HandlerFunc {
 
 		// Check which field is being updated
 		if alias := c.PostForm("alias"); alias != "" {
+			// Prevent reserved routes
+			if isReservedAlias(alias) {
+				c.String(http.StatusBadRequest, "Alias is reserved")
+				return
+			}
 			// Check for duplicate alias (only among non-deleted links)
 			var existing models.Link
 			if err := db.Where("alias = ? AND id != ?", alias, id).First(&existing).Error; err == nil {

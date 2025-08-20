@@ -264,7 +264,7 @@
         if (evt.target.closest('.copy-button')) {
             const button = evt.target.closest('.copy-button');
             const alias = button.dataset.url;
-            const url = window.location.origin + '/go/' + alias;
+            const url = window.location.origin + '/' + alias;
 
             // Copy to clipboard
             navigator.clipboard.writeText(url).then(() => {

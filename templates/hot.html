@@ -99,7 +99,7 @@
                                         <tr>
                                             <td class="whitespace-nowrap py-4 pl-6 pr-3 text-sm font-medium text-indigo-600 dark:text-dark-primary">
                                                 <div class="flex items-center gap-3">
-                                                    <a href="/go/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
+                                                    <a href="/{{ .Alias }}" target="_blank">{{ .Alias }}</a>
                                                     <button type="button"
                                                         class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 copy-button"
                                                         data-url="{{ .Alias }}"
@@ -144,7 +144,7 @@
                                         <div class="flex items-center space-x-4">
                                             <div class="min-w-0 flex-1">
                                                 <div class="flex items-center gap-3">
-                                                    <a href="/go/{{ .Alias }}" target="_blank" class="text-indigo-600 dark:text-dark-primary font-medium">{{ .Alias }}</a>
+                                                    <a href="/{{ .Alias }}" target="_blank" class="text-indigo-600 dark:text-dark-primary font-medium">{{ .Alias }}</a>
                                                     <button type="button"
                                                         class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 copy-button"
                                                         data-url="{{ .Alias }}"
@@ -179,7 +179,7 @@
                                         <div class="flex items-center space-x-4">
                                             <div class="min-w-0 flex-1">
                                                 <div class="flex items-center gap-3">
-                                                    <a href="/go/{{ .Alias }}" target="_blank" class="text-indigo-600 dark:text-dark-primary font-medium">{{ .Alias }}</a>
+                                                    <a href="/{{ .Alias }}" target="_blank" class="text-indigo-600 dark:text-dark-primary font-medium">{{ .Alias }}</a>
                                                     <button type="button"
                                                         class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 copy-button"
                                                         data-url="{{ .Alias }}"
@@ -214,7 +214,7 @@
                                         <div class="flex items-center space-x-4">
                                             <div class="min-w-0 flex-1">
                                                 <div class="flex items-center gap-3">
-                                                    <a href="/go/{{ .Alias }}" target="_blank" class="text-indigo-600 dark:text-dark-primary font-medium">{{ .Alias }}</a>
+                                                    <a href="/{{ .Alias }}" target="_blank" class="text-indigo-600 dark:text-dark-primary font-medium">{{ .Alias }}</a>
                                                     <button type="button"
                                                         class="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 copy-button"
                                                         data-url="{{ .Alias }}"
@@ -249,7 +249,7 @@
         if (evt.target.closest('.copy-button')) {
             const button = evt.target.closest('.copy-button');
             const alias = button.dataset.url;
-            const url = window.location.origin + '/go/' + alias;
+            const url = window.location.origin + '/' + alias;
 
             // Copy to clipboard
             navigator.clipboard.writeText(url).then(() => {
