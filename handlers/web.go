@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	webview "quickr/interfaces/presenters/web"
 )
 
 // HandleHome renders the homepage with all links
@@ -20,13 +21,7 @@ func (h *AppHandler) HandleHome() gin.HandlerFunc {
 		roleVal, _ := c.Get("userRole")
 		isAdmin := roleVal == "admin"
 		log.Printf("Found %d links", len(links))
-		c.HTML(http.StatusOK, "index.html", gin.H{
-			"title":     "Home",
-			"active":    "home",
-			"links":     links,
-			"userEmail": emailVal,
-			"isAdmin":   isAdmin,
-		})
+		c.HTML(http.StatusOK, "index.html", webview.HomeView(links, emailVal.(string), isAdmin))
 	}
 }
 
@@ -41,17 +36,7 @@ func (h *AppHandler) HandleStats() gin.HandlerFunc {
 		emailVal, _ := c.Get("userEmail")
 		roleVal, _ := c.Get("userRole")
 		isAdmin := roleVal == "admin"
-		c.HTML(http.StatusOK, "stats.html", gin.H{
-			"title":       "Statistics",
-			"active":      "stats",
-			"totalLinks":  overview.TotalLinks,
-			"totalClicks": overview.TotalClicks,
-			"activeUsers": overview.ActiveUsers,
-			"topLinks":    overview.TopLinks,
-			"recentLinks": overview.RecentLinks,
-			"userEmail":   emailVal,
-			"isAdmin":     isAdmin,
-		})
+		c.HTML(http.StatusOK, "stats.html", webview.StatsView(overview, emailVal.(string), isAdmin))
 	}
 }
 
@@ -66,14 +51,6 @@ func (h *AppHandler) HandleHot() gin.HandlerFunc {
 		emailVal, _ := c.Get("userEmail")
 		roleVal, _ := c.Get("userRole")
 		isAdmin := roleVal == "admin"
-		c.HTML(http.StatusOK, "hot.html", gin.H{
-			"active":    "hot",
-			"recent":    hot.Recent,
-			"top7d":     hot.Top7d,
-			"top30d":    hot.Top30d,
-			"topAll":    hot.TopAll,
-			"userEmail": emailVal,
-			"isAdmin":   isAdmin,
-		})
+		c.HTML(http.StatusOK, "hot.html", webview.HotView(hot, emailVal.(string), isAdmin))
 	}
 }
