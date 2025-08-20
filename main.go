@@ -17,6 +17,7 @@ import (
 	"quickr/handlers"
 	infraMailer "quickr/infrastructure/mailer"
 	"quickr/infrastructure/ratelimit"
+	"quickr/interfaces/session"
 	"quickr/models"
 	"quickr/repositories"
 	"quickr/services"
@@ -111,7 +112,10 @@ func main() {
 	invRepo := repositories.NewGormInvitationRepository(db)
 	authService := services.NewAuthService(userRepo, invRepo, emailSender, appBaseURL, nil)
 	statsService := services.NewStatsService(linkService)
-	h := handlers.NewAppHandler(linkService, authService, statsService, rateLimiter, appBaseURL)
+	// session manager
+	jwtSecret := os.Getenv("JWT_SECRET")
+	sess := session.NewManager([]byte(jwtSecret), "session", 180*24*60*60*1e9)
+	h := handlers.NewAppHandler(linkService, authService, statsService, rateLimiter, appBaseURL, sess)
 
 	// Public auth routes
 	r.GET("/login", h.ShowLogin())

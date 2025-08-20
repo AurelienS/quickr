@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"quickr/interfaces/httpx"
 )
 
@@ -19,9 +18,8 @@ const (
 	cookieMaxAge = 180 * 24 * time.Hour // ~6 months
 )
 
-type Claims struct {
+type Claims struct { // deprecated; replaced by interfaces/session
 	Role string `json:"role"`
-	jwt.RegisteredClaims
 }
 
 func getJWTSecret() ([]byte, error) {
@@ -41,29 +39,11 @@ func getAdminEmail() string {
 	return a
 }
 
-// issueSessionCookie signs and sets the session cookie for the given user
-func issueSessionCookie(c *gin.Context, email, role string) error {
-	secret, err := getJWTSecret()
-	if err != nil {
-		log.Println("Auth error: JWT secret not configured")
-		return errors.New("server configuration error")
-	}
-	claims := &Claims{Role: role, RegisteredClaims: jwt.RegisteredClaims{Subject: email, IssuedAt: jwt.NewNumericDate(time.Now()), ExpiresAt: jwt.NewNumericDate(time.Now().Add(cookieMaxAge))}}
-	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signed, err := jwtToken.SignedString(secret)
-	if err != nil {
-		return errors.New("failed to sign token")
-	}
-	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie(cookieName, signed, int(cookieMaxAge.Seconds()), "/", "", true, true)
-	return nil
-}
-
 // RequireAuth middleware validates the JWT session cookie and ensures the user is not disabled
 func (h *AppHandler) RequireAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		cookie, err := c.Cookie(cookieName)
-		if err != nil || strings.TrimSpace(cookie) == "" {
+		email, role, err := h.Session.Parse(c)
+		if err != nil || strings.TrimSpace(email) == "" {
 			accept := c.GetHeader("Accept")
 			if strings.Contains(accept, "text/html") || c.Request.Method == http.MethodGet {
 				c.Redirect(http.StatusFound, "/login")
@@ -73,30 +53,13 @@ func (h *AppHandler) RequireAuth() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
 			return
 		}
-		secret, err := getJWTSecret()
-		if err != nil {
-			log.Println("Auth error: JWT secret not configured")
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "server configuration error"})
-			return
-		}
-		token, err := jwt.ParseWithClaims(cookie, &Claims{}, func(token *jwt.Token) (interface{}, error) { return secret, nil })
-		if err != nil || !token.Valid {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid session"})
-			return
-		}
-		claims, ok := token.Claims.(*Claims)
-		if !ok {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid session"})
-			return
-		}
-
-		if disabled, _ := h.AuthService.IsUserDisabled(claims.Subject); disabled {
-			c.SetCookie(cookieName, "", -1, "/", "", true, true)
+		if disabled, _ := h.AuthService.IsUserDisabled(email); disabled {
+			h.Session.Clear(c)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "account revoked"})
 			return
 		}
-		c.Set("userEmail", claims.Subject)
-		c.Set("userRole", claims.Role)
+		c.Set("userEmail", email)
+		c.Set("userRole", role)
 		c.Next()
 	}
 }
@@ -137,7 +100,7 @@ func (h *AppHandler) RequestMagicLink() gin.HandlerFunc {
 		// If admin email, ensure admin user and login immediately
 		if strings.EqualFold(email, getAdminEmail()) {
 			_ = h.AuthService.EnsureAdmin(email)
-			if err := issueSessionCookie(c, email, "admin"); err != nil {
+			if err := h.Session.SignIn(c, email, "admin"); err != nil {
 				c.String(http.StatusInternalServerError, err.Error())
 				return
 			}
@@ -167,7 +130,7 @@ func (h *AppHandler) RedeemMagicLink() gin.HandlerFunc {
 			c.String(http.StatusUnauthorized, err.Error())
 			return
 		}
-		if err := issueSessionCookie(c, email, role); err != nil {
+		if err := h.Session.SignIn(c, email, role); err != nil {
 			c.String(http.StatusInternalServerError, err.Error())
 			return
 		}
