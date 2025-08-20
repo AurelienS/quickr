@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"quickr/services"
 )
 
 type CreateLinkRequest struct {
@@ -47,12 +49,12 @@ func (h *AppHandler) CreateLink() gin.HandlerFunc {
 
 			link, err := h.LinkService.CreateLink(alias, url, creatorEmail)
 			if err != nil {
-				switch err.Error() {
-				case "alias is reserved":
+				switch {
+				case errors.Is(err, services.ErrAliasReserved):
 					c.String(http.StatusBadRequest, "Alias is reserved")
-				case "invalid url format":
+				case errors.Is(err, services.ErrInvalidURL):
 					c.String(http.StatusBadRequest, "Invalid URL format")
-				case "alias already exists":
+				case errors.Is(err, services.ErrAliasExists):
 					c.String(http.StatusConflict, "Alias already exists")
 				default:
 					c.String(http.StatusInternalServerError, "Failed to create link")
@@ -73,12 +75,12 @@ func (h *AppHandler) CreateLink() gin.HandlerFunc {
 
 		link, err := h.LinkService.CreateLink(req.Alias, req.URL, creatorEmail)
 		if err != nil {
-			switch err.Error() {
-			case "alias is reserved":
+			switch {
+			case errors.Is(err, services.ErrAliasReserved):
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Alias is reserved"})
-			case "invalid url format":
+			case errors.Is(err, services.ErrInvalidURL):
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid URL format"})
-			case "alias already exists":
+			case errors.Is(err, services.ErrAliasExists):
 				c.JSON(http.StatusConflict, gin.H{"error": "Alias already exists"})
 			default:
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create link"})
@@ -135,14 +137,14 @@ func (h *AppHandler) UpdateLink() gin.HandlerFunc {
 		newURL := c.PostForm("url")
 		updated, err := h.LinkService.UpdateLink(id, newAlias, newURL, editorEmail)
 		if err != nil {
-			switch err.Error() {
-			case "alias is reserved":
+			switch {
+			case errors.Is(err, services.ErrAliasReserved):
 				c.String(http.StatusBadRequest, "Alias is reserved")
-			case "invalid url format":
+			case errors.Is(err, services.ErrInvalidURL):
 				c.String(http.StatusBadRequest, "Invalid URL format")
-			case "alias already exists":
+			case errors.Is(err, services.ErrAliasExists):
 				c.String(http.StatusConflict, "Alias already exists")
-			case "link not found":
+			case errors.Is(err, services.ErrLinkNotFound):
 				c.String(http.StatusNotFound, "Link not found")
 			default:
 				c.String(http.StatusInternalServerError, "Failed to update link")
@@ -178,7 +180,7 @@ func (h *AppHandler) DeleteLink() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		_, err := h.LinkService.DeleteLink(c.Param("id"))
 		if err != nil {
-			if err.Error() == "link not found" {
+			if errors.Is(err, services.ErrLinkNotFound) {
 				c.String(http.StatusNotFound, "Link not found")
 			} else {
 				c.String(http.StatusInternalServerError, "Failed to delete link")

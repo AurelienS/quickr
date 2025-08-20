@@ -10,6 +10,13 @@ import (
     "quickr/repositories"
 )
 
+var (
+    ErrAliasReserved = errors.New("alias is reserved")
+    ErrInvalidURL    = errors.New("invalid url format")
+    ErrAliasExists   = errors.New("alias already exists")
+    ErrLinkNotFound  = errors.New("link not found")
+)
+
 type LinkService struct { repo repositories.LinkRepository }
 
 func NewLinkService(repo repositories.LinkRepository) *LinkService { return &LinkService{repo: repo} }
@@ -25,12 +32,12 @@ func (s *LinkService) CreateLink(alias, targetURL, creator string) (*models.Link
         return nil, errors.New("alias and url are required")
     }
     if s.IsAliasReserved(alias) {
-        return nil, errors.New("alias is reserved")
+        return nil, ErrAliasReserved
     }
     if !s.ValidateURL(targetURL) {
-        return nil, errors.New("invalid url format")
+        return nil, ErrInvalidURL
     }
-    if exists, err := s.repo.ExistsByAlias(alias); err != nil { return nil, err } else if exists { return nil, errors.New("alias already exists") }
+    if exists, err := s.repo.ExistsByAlias(alias); err != nil { return nil, err } else if exists { return nil, ErrAliasExists }
     link := &models.Link{Alias: alias, URL: targetURL, CreatorName: creator}
     if err := s.repo.Create(link); err != nil { return nil, err }
     return link, nil
@@ -38,17 +45,17 @@ func (s *LinkService) CreateLink(alias, targetURL, creator string) (*models.Link
 
 func (s *LinkService) UpdateLink(id string, newAlias, newURL, editor string) (*models.Link, error) {
     link, err := s.repo.FindByID(id)
-    if err != nil { return nil, errors.New("link not found") }
+    if err != nil { return nil, ErrLinkNotFound }
     if newAlias != "" {
         if s.IsAliasReserved(newAlias) {
-            return nil, errors.New("alias is reserved")
+            return nil, ErrAliasReserved
         }
-        if exists, err := s.repo.ExistsByAliasExceptID(newAlias, id); err != nil { return nil, err } else if exists { return nil, errors.New("alias already exists") }
+        if exists, err := s.repo.ExistsByAliasExceptID(newAlias, id); err != nil { return nil, err } else if exists { return nil, ErrAliasExists }
         link.Alias = newAlias
     }
     if newURL != "" {
         if !s.ValidateURL(newURL) {
-            return nil, errors.New("invalid url format")
+            return nil, ErrInvalidURL
         }
         link.URL = newURL
     }
@@ -61,7 +68,7 @@ func (s *LinkService) UpdateLink(id string, newAlias, newURL, editor string) (*m
 
 func (s *LinkService) DeleteLink(id string) (*models.Link, error) {
     link, err := s.repo.FindByID(id)
-    if err != nil { return nil, errors.New("link not found") }
+    if err != nil { return nil, ErrLinkNotFound }
     if err := s.repo.Delete(link); err != nil { return nil, err }
     return link, nil
 }
