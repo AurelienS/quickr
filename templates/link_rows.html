@@ -13,8 +13,8 @@
         </div>
     </td>
     <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500" data-id="{{ .ID }}" data-field="url">
-        <div class="flex items-center gap-2 min-w-[300px] h-[26px]">
-            <span class="cursor-pointer hover:text-gray-900 flex-1 truncate"
+        <div class="flex items-center gap-2 min-w-[16rem] max-w-[40rem] h-[26px]">
+            <span class="cursor-pointer hover:text-gray-900 flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
                 hx-get="/api/links/{{ .ID }}/edit?field=url"
                 hx-trigger="click"
                 hx-target="closest td"
