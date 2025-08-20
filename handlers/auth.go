@@ -10,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"quickr/interfaces/httpx"
 )
 
 // JWT cookie settings
@@ -38,6 +39,24 @@ func getAdminEmail() string {
 		log.Println("Config warning: missing env ADMIN_EMAIL")
 	}
 	return a
+}
+
+// issueSessionCookie signs and sets the session cookie for the given user
+func issueSessionCookie(c *gin.Context, email, role string) error {
+	secret, err := getJWTSecret()
+	if err != nil {
+		log.Println("Auth error: JWT secret not configured")
+		return errors.New("server configuration error")
+	}
+	claims := &Claims{Role: role, RegisteredClaims: jwt.RegisteredClaims{Subject: email, IssuedAt: jwt.NewNumericDate(time.Now()), ExpiresAt: jwt.NewNumericDate(time.Now().Add(cookieMaxAge))}}
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signed, err := jwtToken.SignedString(secret)
+	if err != nil {
+		return errors.New("failed to sign token")
+	}
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie(cookieName, signed, int(cookieMaxAge.Seconds()), "/", "", true, true)
+	return nil
 }
 
 // RequireAuth middleware validates the JWT session cookie and ensures the user is not disabled
@@ -118,27 +137,15 @@ func (h *AppHandler) RequestMagicLink() gin.HandlerFunc {
 		// If admin email, ensure admin user and login immediately
 		if strings.EqualFold(email, getAdminEmail()) {
 			_ = h.AuthService.EnsureAdmin(email)
-			user, _ := h.AuthService.GetUserByEmail(email)
-			secret, err := getJWTSecret()
-			if err != nil {
-				log.Println("Auth error: JWT secret not configured")
-				c.String(http.StatusInternalServerError, "server configuration error")
+			if err := issueSessionCookie(c, email, "admin"); err != nil {
+				c.String(http.StatusInternalServerError, err.Error())
 				return
 			}
-			claims := &Claims{Role: "admin", RegisteredClaims: jwt.RegisteredClaims{Subject: user.Email, IssuedAt: jwt.NewNumericDate(time.Now()), ExpiresAt: jwt.NewNumericDate(time.Now().Add(cookieMaxAge))}}
-			jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-			signed, err := jwtToken.SignedString(secret)
-			if err != nil {
-				c.String(http.StatusInternalServerError, "failed to sign token")
-				return
-			}
-			c.SetSameSite(http.SameSiteLaxMode)
-			c.SetCookie(cookieName, signed, int(cookieMaxAge.Seconds()), "/", "", true, true)
 			c.Redirect(http.StatusFound, "/admin")
 			return
 		}
 
-		base := resolveBaseURL(c.Request, h.AppBaseURL)
+		base := httpx.ResolveBaseURL(c.Request, h.AppBaseURL)
 		if err := h.AuthService.RequireAndSendMagicLink(email, base); err != nil {
 			c.JSON(http.StatusForbidden, gin.H{"error": "email not invited"})
 			return
@@ -160,21 +167,10 @@ func (h *AppHandler) RedeemMagicLink() gin.HandlerFunc {
 			c.String(http.StatusUnauthorized, err.Error())
 			return
 		}
-		secret, err := getJWTSecret()
-		if err != nil {
-			log.Println("Auth error: JWT secret not configured")
-			c.String(http.StatusInternalServerError, "server configuration error")
+		if err := issueSessionCookie(c, email, role); err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
 			return
 		}
-		claims := &Claims{Role: role, RegisteredClaims: jwt.RegisteredClaims{Subject: email, IssuedAt: jwt.NewNumericDate(time.Now()), ExpiresAt: jwt.NewNumericDate(time.Now().Add(cookieMaxAge))}}
-		jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-		signed, err := jwtToken.SignedString(secret)
-		if err != nil {
-			c.String(http.StatusInternalServerError, "failed to sign token")
-			return
-		}
-		c.SetSameSite(http.SameSiteLaxMode)
-		c.SetCookie(cookieName, signed, int(cookieMaxAge.Seconds()), "/", "", true, true)
 		c.Redirect(http.StatusFound, "/")
 	}
 }

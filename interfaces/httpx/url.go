@@ -1,4 +1,4 @@
-package handlers
+package httpx
 
 import (
     "fmt"
@@ -6,17 +6,15 @@ import (
     "strings"
 )
 
-// resolveBaseURL determines the base URL for links using the incoming request
+// ResolveBaseURL determines the base URL for links using the incoming request
 // headers when available, falling back to the configured APP_BASE_URL.
 // Priority: X-Forwarded-Proto/Host -> Request Host/TLS -> fallback.
-func resolveBaseURL(r *http.Request, fallback string) string {
-    // Prefer forwarded values when behind a proxy
+func ResolveBaseURL(r *http.Request, fallback string) string {
     proto := r.Header.Get("X-Forwarded-Proto")
     if proto == "" {
         proto = r.Header.Get("X-Forwarded-Scheme")
     }
     if proto != "" {
-        // Sometimes contains comma-separated list; take first
         if idx := strings.IndexByte(proto, ','); idx >= 0 {
             proto = strings.TrimSpace(proto[:idx])
         }

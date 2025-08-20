@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"quickr/interfaces/httpx"
 	"quickr/models"
 )
 
@@ -43,7 +44,7 @@ func (h *AppHandler) CreateInvitation() gin.HandlerFunc {
 			return
 		}
 		log.Printf("[ADMIN] CreateInvitation for %s", email)
-		base := resolveBaseURL(c.Request, h.AppBaseURL)
+		base := httpx.ResolveBaseURL(c.Request, h.AppBaseURL)
 		if _, err := h.AuthService.CreateMagicLinkInvite(email, base); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create invitation"})
 			return
@@ -120,7 +121,7 @@ func (h *AppHandler) RevokeInvitationsByEmail() gin.HandlerFunc {
 func (h *AppHandler) SendInvitation() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
-		base := resolveBaseURL(c.Request, h.AppBaseURL)
+		base := httpx.ResolveBaseURL(c.Request, h.AppBaseURL)
 		inv, err := h.AuthService.SendInvitationByID(id, base)
 		if err != nil {
 			log.Printf("[ADMIN] Send failed for id=%s: %v", id, err)

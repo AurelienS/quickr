@@ -13,7 +13,10 @@ import (
 	"github.com/joho/godotenv"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"quickr/domain/reserved"
 	"quickr/handlers"
+	infraMailer "quickr/infrastructure/mailer"
+	"quickr/infrastructure/ratelimit"
 	"quickr/models"
 	"quickr/repositories"
 	"quickr/services"
@@ -94,8 +97,8 @@ func main() {
 	log.Println("Static files route added from embedded FS")
 
 	// dependencies
-	mailer := handlers.NewSendinblueClient()
-	rateLimiter := handlers.NewIPLimiter(20) // 20 requests per minute per IP for login
+	emailSender := infraMailer.NewSendinblueClient()
+	rateLimiter := ratelimit.NewIPLimiter(20) // 20 requests per minute per IP for login
 	appBaseURL := os.Getenv("APP_BASE_URL")
 	if appBaseURL == "" {
 		appBaseURL = "http://localhost:8080"
@@ -106,8 +109,9 @@ func main() {
 	linkService := services.NewLinkService(linkRepo)
 	userRepo := repositories.NewGormUserRepository(db)
 	invRepo := repositories.NewGormInvitationRepository(db)
-	authService := services.NewAuthService(userRepo, invRepo, mailer, appBaseURL, nil)
-	h := handlers.NewAppHandler(linkService, authService, rateLimiter, appBaseURL)
+	authService := services.NewAuthService(userRepo, invRepo, emailSender, appBaseURL, nil)
+	statsService := services.NewStatsService(linkService)
+	h := handlers.NewAppHandler(linkService, authService, statsService, rateLimiter, appBaseURL)
 
 	// Public auth routes
 	r.GET("/login", h.ShowLogin())
@@ -129,7 +133,7 @@ func main() {
 	// Root-level alias redirect. Must come after fixed routes.
 	r.GET("/:alias", func(c *gin.Context) {
 		alias := c.Param("alias")
-		if handlers.IsReservedAliasPublic(alias) {
+		if reserved.IsReservedAlias(alias) {
 			c.Status(http.StatusNotFound)
 			return
 		}
