@@ -87,20 +87,6 @@ Recommended structure (adapt as needed):
 - `interfaces/` (optional) REST/GraphQL/CLI controllers, validation
 
 
-
-## Git workflow & PRs
-
-- **Branches**: `type/scope-short-desc` (e.g., `feat/auth-oauth-google`).
-- **Commits**: small, self-contained, passing; prefer squashing before merge if many WIP.
-- **PR size**: keep under ~300 lines changed when possible; split otherwise.
-- **PR description**: why, what, screenshots/logs, migration notes; link issues.
-- **Review checklist**:
-  - Follows SOLID and layering
-  - Clear names; small functions; no dead code
-  - Adequate tests updated/added; CI green
-  - Errors handled; no leaking secrets; logs are right level
-  - Performance implications considered (N+1, allocations, hot paths)
-
 ## Security & privacy
 
 - Never log secrets, tokens, or personal data; scrub or hash identifiers.
@@ -117,11 +103,6 @@ Recommended structure (adapt as needed):
 - Use caching thoughtfully; define invalidation strategy; bound cache size/TTL.
 - Guard against unbounded concurrency; use queues or rate limits where needed.
 
-## Tooling & automation
-
-- Enforce commit conventions with commitlint/husky or equivalent.
-- Format/lint on commit via pre-commit hooks; block on CI failures.
-- Consider ADRs (`docs/adr/`) for noteworthy design decisions.
 
 ## Conventional Commit aide-memoire
 
