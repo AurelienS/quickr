@@ -13,8 +13,14 @@ import (
 	"github.com/joho/godotenv"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"quickr/domain/reserved"
 	"quickr/handlers"
+	infraMailer "quickr/infrastructure/mailer"
+	"quickr/infrastructure/ratelimit"
+	"quickr/interfaces/session"
 	"quickr/models"
+	"quickr/repositories"
+	"quickr/services"
 )
 
 //go:embed templates/*.html
@@ -39,107 +45,153 @@ func requireEnv(key string) {
 }
 
 func main() {
-	// Load .env if present
 	_ = godotenv.Load()
+	must(ensureDBDir())
+	warnEnv()
 
-	// Create data directory if it doesn't exist
-	if err := ensureDBDir(); err != nil {
-		log.Fatal("Failed to create data directory:", err)
-	}
+	db := mustDB()
+	mustMigrate(db)
 
-	// Validate environment configuration (warn-only)
+	r := newRouter()
+	loadTemplates(r)
+	mountStatic(r)
+
+	h := wireHandlers(db)
+	registerRoutes(r, h)
+
+	start(r)
+}
+
+func warnEnv() {
 	requireEnv("JWT_SECRET")
 	requireEnv("ADMIN_EMAIL")
 	requireEnv("APP_BASE_URL")
 	requireEnv("SENDINBLUE_API_KEY")
+}
 
-	// Initialize SQLite database
+func must(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func mustDB() *gorm.DB {
 	dbPath := filepath.Join("data", "quickr.db")
 	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
+	return db
+}
 
-	// Auto migrate the schema
-	err = db.AutoMigrate(&models.Link{}, &models.User{}, &models.Invitation{})
-	if err != nil {
+func mustMigrate(db *gorm.DB) {
+	if err := db.AutoMigrate(&models.Link{}, &models.User{}, &models.Invitation{}); err != nil {
 		log.Fatal("Failed to migrate database:", err)
 	}
+}
 
-	// Setup Gin router
-	r := gin.New() // Don't use Default() as it already includes Logger
-	r.Use(gin.Logger())
-	r.Use(gin.Recovery())
-
-	// Add our custom request logger
+func newRouter() *gin.Engine {
+	r := gin.New()
+	r.Use(gin.Logger(), gin.Recovery())
 	r.Use(func(c *gin.Context) {
 		log.Printf("[REQUEST] %s %s", c.Request.Method, c.Request.URL.Path)
 		c.Next()
 		log.Printf("[RESPONSE] %s %s -> %d", c.Request.Method, c.Request.URL.Path, c.Writer.Status())
 	})
+	return r
+}
 
-	// Load HTML templates from embedded FS
+func loadTemplates(r *gin.Engine) {
 	templ := template.Must(template.New("").ParseFS(templateFS, "templates/*.html"))
 	r.SetHTMLTemplate(templ)
 	log.Println("Templates loaded from embedded FS")
+}
 
-	// Serve static files from embedded FS
+func mountStatic(r *gin.Engine) {
 	staticSubFS, err := fs.Sub(staticFS, "static")
 	if err != nil {
 		log.Fatal("Failed to create sub filesystem for static files:", err)
 	}
 	r.StaticFS("/static", http.FS(staticSubFS))
 	log.Println("Static files route added from embedded FS")
+}
 
-	// dependencies
-	mailer := handlers.NewSendinblueClient()
-	rateLimiter := handlers.NewIPLimiter(20) // 20 requests per minute per IP for login
-	appBaseURL := os.Getenv("APP_BASE_URL")
-	if appBaseURL == "" {
-		appBaseURL = "http://localhost:8080"
-	}
+func wireHandlers(db *gorm.DB) *handlers.AppHandler {
+	emailSender := infraMailer.NewSendinblueClient()
+	rateLimiter := ratelimit.NewIPLimiter(20) // 20 requests per minute per IP for login
+	appBaseURL := getenvDefault("APP_BASE_URL", "http://localhost:8080")
 
+	linkRepo := repositories.NewGormLinkRepository(db)
+	userRepo := repositories.NewGormUserRepository(db)
+	invRepo := repositories.NewGormInvitationRepository(db)
+	linkService := services.NewLinkService(linkRepo)
+	authService := services.NewAuthService(userRepo, invRepo, emailSender, appBaseURL, nil)
+	statsService := services.NewStatsService(linkService)
+	jwtSecret := os.Getenv("JWT_SECRET")
+	sess := session.NewManager([]byte(jwtSecret), "session", 180*24*60*60*1e9)
+	return handlers.NewAppHandler(linkService, authService, statsService, rateLimiter, appBaseURL, sess)
+}
+
+func registerRoutes(r *gin.Engine, h *handlers.AppHandler) {
 	// Public auth routes
-	r.GET("/login", handlers.ShowLogin())
-	r.POST("/login", handlers.RequestMagicLink(db, rateLimiter, mailer, appBaseURL))
-	r.GET("/magic", handlers.RedeemMagicLink(db))
+	r.GET("/login", h.ShowLogin())
+	r.POST("/login", h.RequestMagicLink())
+	r.GET("/magic", h.RedeemMagicLink())
 	r.POST("/logout", handlers.Logout())
 
 	// Web routes (require auth)
-	r.GET("/", handlers.RequireAuth(db), handlers.HandleHome(db))
-	r.GET("/stats", handlers.RequireAuth(db), handlers.HandleStats(db))
-	r.GET("/hot", handlers.RequireAuth(db), handlers.HandleHot(db))
+	r.GET("/", h.RequireAuth(), h.HandleHome())
+	r.GET("/stats", h.RequireAuth(), h.HandleStats())
+	r.GET("/hot", h.RequireAuth(), h.HandleHot())
 
 	// Redirect route with debug handler (keep public)
 	r.GET("/go/:alias", func(c *gin.Context) {
 		log.Printf("[DEBUG] About to call redirect handler for alias: %s", c.Param("alias"))
-		handlers.HandleRedirect(db)(c)
+		h.HandleRedirect()(c)
+	})
+
+	// Root-level alias redirect. Must come after fixed routes.
+	r.GET("/:alias", func(c *gin.Context) {
+		alias := c.Param("alias")
+		if reserved.IsReservedAlias(alias) {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		h.HandleRedirect()(c)
 	})
 
 	// Admin routes
-	admin := r.Group("/admin", handlers.RequireAuth(db), handlers.RequireAdmin())
+	admin := r.Group("/admin", h.RequireAuth(), h.RequireAdmin())
 	{
-		admin.GET("", handlers.AdminDashboard(db))
-		admin.POST("/invitations", handlers.CreateInvitation(db))
-		admin.POST("/invitations/:id/send", handlers.SendInvitation(db, mailer, appBaseURL))
-		admin.POST("/invitations/:id/revoke", handlers.RevokeInvitation(db))
-		admin.POST("/invitations/revoke-email", handlers.RevokeInvitationsByEmail(db))
+		admin.GET("", h.AdminDashboard())
+		admin.POST("/invitations", h.CreateInvitation())
+		admin.POST("/invitations/:id/send", h.SendInvitation())
+		admin.POST("/invitations/:id/revoke", h.RevokeInvitation())
+		admin.POST("/invitations/revoke-email", h.RevokeInvitationsByEmail())
 	}
 
 	// API routes (require auth)
-	api := r.Group("/api", handlers.RequireAuth(db))
+	api := r.Group("/api", h.RequireAuth())
 	{
-		api.GET("/links", handlers.ListLinks(db))
-		api.POST("/links", handlers.CreateLink(db))
-		api.GET("/links/:id/edit", handlers.GetLinkEditField(db))
-		api.PUT("/links/:id", handlers.UpdateLink(db))
-		api.DELETE("/links/:id", handlers.DeleteLink(db))
-		api.GET("/search", handlers.SearchLinks(db))
+		api.GET("/links", h.ListLinks())
+		api.POST("/links", h.CreateLink())
+		api.GET("/links/:id/edit", h.GetLinkEditField())
+		api.PUT("/links/:id", h.UpdateLink())
+		api.DELETE("/links/:id", h.DeleteLink())
+		api.GET("/search", h.SearchLinks())
 	}
+}
 
+func start(r *gin.Engine) {
 	log.Printf("Server starting on http://localhost:8080")
-	// Start server
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
+}
+
+func getenvDefault(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
 }

@@ -1,12 +1,11 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
-	"net/url"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-	"quickr/models"
+	"quickr/services"
 )
 
 type CreateLinkRequest struct {
@@ -18,18 +17,11 @@ type UpdateLinkRequest struct {
 	URL string `json:"url" binding:"required"`
 }
 
-// Validation helper
-func validateURL(urlStr string) bool {
-	u, err := url.Parse(urlStr)
-	return err == nil && (u.Scheme == "http" || u.Scheme == "https")
-}
-
 // GET /api/links
-func ListLinks(db *gorm.DB) gin.HandlerFunc {
+func (h *AppHandler) ListLinks() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var links []models.Link
-		result := db.Find(&links)
-		if result.Error != nil {
+		links, err := h.LinkService.ListLinks()
+		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch links"})
 			return
 		}
@@ -38,7 +30,7 @@ func ListLinks(db *gorm.DB) gin.HandlerFunc {
 }
 
 // POST /api/links
-func CreateLink(db *gorm.DB) gin.HandlerFunc {
+func (h *AppHandler) CreateLink() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get current user email from context
 		emailVal, _ := c.Get("userEmail")
@@ -55,32 +47,22 @@ func CreateLink(db *gorm.DB) gin.HandlerFunc {
 				return
 			}
 
-			// Validate URL
-			if !validateURL(url) {
-				c.String(http.StatusBadRequest, "Invalid URL format")
+			link, err := h.LinkService.CreateLink(alias, url, creatorEmail)
+			if err != nil {
+				switch {
+				case errors.Is(err, services.ErrAliasReserved):
+					c.String(http.StatusBadRequest, "Alias is reserved")
+				case errors.Is(err, services.ErrInvalidURL):
+					c.String(http.StatusBadRequest, "Invalid URL format")
+				case errors.Is(err, services.ErrAliasExists):
+					c.String(http.StatusConflict, "Alias already exists")
+				default:
+					c.String(http.StatusInternalServerError, "Failed to create link")
+				}
 				return
 			}
-
-			// Check for duplicate alias (only among non-deleted links)
-			var existing models.Link
-			if err := db.Where("alias = ?", alias).First(&existing).Error; err == nil {
-				c.String(http.StatusConflict, "Alias already exists")
-				return
-			}
-
-			link := models.Link{
-				Alias:       alias,
-				URL:         url,
-				CreatorName: creatorEmail,
-			}
-
-			if err := db.Create(&link).Error; err != nil {
-				c.String(http.StatusInternalServerError, "Failed to create link")
-				return
-			}
-
 			// Return just the new row HTML
-			c.HTML(http.StatusCreated, "link_row.html", link)
+			c.HTML(http.StatusCreated, "link_row.html", *link)
 			return
 		}
 
@@ -91,27 +73,18 @@ func CreateLink(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Validate URL
-		if !validateURL(req.URL) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid URL format"})
-			return
-		}
-
-		// Check for duplicate alias (only among non-deleted links)
-		var existing models.Link
-		if err := db.Where("alias = ?", req.Alias).First(&existing).Error; err == nil {
-			c.JSON(http.StatusConflict, gin.H{"error": "Alias already exists"})
-			return
-		}
-
-		link := models.Link{
-			Alias:       req.Alias,
-			URL:         req.URL,
-			CreatorName: creatorEmail,
-		}
-
-		if err := db.Create(&link).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create link"})
+		link, err := h.LinkService.CreateLink(req.Alias, req.URL, creatorEmail)
+		if err != nil {
+			switch {
+			case errors.Is(err, services.ErrAliasReserved):
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Alias is reserved"})
+			case errors.Is(err, services.ErrInvalidURL):
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid URL format"})
+			case errors.Is(err, services.ErrAliasExists):
+				c.JSON(http.StatusConflict, gin.H{"error": "Alias already exists"})
+			default:
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create link"})
+			}
 			return
 		}
 
@@ -120,7 +93,7 @@ func CreateLink(db *gorm.DB) gin.HandlerFunc {
 }
 
 // GET /api/links/:id/edit
-func GetLinkEditField(db *gorm.DB) gin.HandlerFunc {
+func (h *AppHandler) GetLinkEditField() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		field := c.Query("field")
@@ -130,8 +103,8 @@ func GetLinkEditField(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		var link models.Link
-		if err := db.First(&link, id).Error; err != nil {
+		link, err := h.LinkService.GetLinkByID(id)
+		if err != nil {
 			c.String(http.StatusNotFound, "Link not found")
 			return
 		}
@@ -152,7 +125,7 @@ func GetLinkEditField(db *gorm.DB) gin.HandlerFunc {
 }
 
 // PUT /api/links/:id
-func UpdateLink(db *gorm.DB) gin.HandlerFunc {
+func (h *AppHandler) UpdateLink() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 
@@ -160,82 +133,64 @@ func UpdateLink(db *gorm.DB) gin.HandlerFunc {
 		emailVal, _ := c.Get("userEmail")
 		editorEmail, _ := emailVal.(string)
 
-		var link models.Link
-		if err := db.First(&link, id).Error; err != nil {
-			c.String(http.StatusNotFound, "Link not found")
-			return
-		}
-
-		// Check which field is being updated
-		if alias := c.PostForm("alias"); alias != "" {
-			// Check for duplicate alias (only among non-deleted links)
-			var existing models.Link
-			if err := db.Where("alias = ? AND id != ?", alias, id).First(&existing).Error; err == nil {
-				c.String(http.StatusConflict, "Alias already exists")
-				return
-			}
-			link.Alias = alias
-		}
-
-		if url := c.PostForm("url"); url != "" {
-			if !validateURL(url) {
+		newAlias := c.PostForm("alias")
+		newURL := c.PostForm("url")
+		updated, err := h.LinkService.UpdateLink(id, newAlias, newURL, editorEmail)
+		if err != nil {
+			switch {
+			case errors.Is(err, services.ErrAliasReserved):
+				c.String(http.StatusBadRequest, "Alias is reserved")
+			case errors.Is(err, services.ErrInvalidURL):
 				c.String(http.StatusBadRequest, "Invalid URL format")
-				return
+			case errors.Is(err, services.ErrAliasExists):
+				c.String(http.StatusConflict, "Alias already exists")
+			case errors.Is(err, services.ErrLinkNotFound):
+				c.String(http.StatusNotFound, "Link not found")
+			default:
+				c.String(http.StatusInternalServerError, "Failed to update link")
 			}
-			link.URL = url
-		}
-
-		// Update last editor as creatorName
-		if editorEmail != "" {
-			link.CreatorName = editorEmail
-		}
-
-		if err := db.Save(&link).Error; err != nil {
-			c.String(http.StatusInternalServerError, "Failed to update link")
 			return
 		}
 
 		// Return the updated cell HTML
 		if c.GetHeader("HX-Request") == "true" {
-			if alias := c.PostForm("alias"); alias != "" {
+			if newAlias != "" {
 				c.HTML(http.StatusOK, "link_cell.html", gin.H{
-					"id":    link.ID,
+					"id":    updated.ID,
 					"field": "alias",
-					"value": link.Alias,
+					"value": updated.Alias,
 				})
-			} else if url := c.PostForm("url"); url != "" {
+			} else if newURL != "" {
 				c.HTML(http.StatusOK, "link_cell.html", gin.H{
-					"id":    link.ID,
+					"id":    updated.ID,
 					"field": "url",
-					"value": link.URL,
-					"alias": link.Alias,
+					"value": updated.URL,
+					"alias": updated.Alias,
 				})
 			}
 			return
 		}
 
-		c.JSON(http.StatusOK, link)
+		c.JSON(http.StatusOK, updated)
 	}
 }
 
 // DELETE /api/links/:id
-func DeleteLink(db *gorm.DB) gin.HandlerFunc {
+func (h *AppHandler) DeleteLink() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var link models.Link
-		if err := db.First(&link, c.Param("id")).Error; err != nil {
-			c.String(http.StatusNotFound, "Link not found")
-			return
-		}
-
-		if err := db.Delete(&link).Error; err != nil {
-			c.String(http.StatusInternalServerError, "Failed to delete link")
+		_, err := h.LinkService.DeleteLink(c.Param("id"))
+		if err != nil {
+			if errors.Is(err, services.ErrLinkNotFound) {
+				c.String(http.StatusNotFound, "Link not found")
+			} else {
+				c.String(http.StatusInternalServerError, "Failed to delete link")
+			}
 			return
 		}
 
 		// If it's an HTMX request, return the updated list
 		if c.GetHeader("HX-Request") == "true" {
-			var links []models.Link
-			db.Order("created_at desc").Find(&links)
+			links, _ := h.LinkService.ListLinks()
 			c.HTML(http.StatusOK, "link_rows.html", gin.H{
 				"links": links,
 			})
@@ -247,30 +202,27 @@ func DeleteLink(db *gorm.DB) gin.HandlerFunc {
 }
 
 // GET /api/search
-func SearchLinks(db *gorm.DB) gin.HandlerFunc {
-    return func(c *gin.Context) {
-        query := c.Query("q")
-        if query == "" {
-            // If no query, return all links
-            var links []models.Link
-            db.Order("created_at desc").Find(&links)
-            // Use the same template as the main list
-            for i := range links {
-                c.HTML(http.StatusOK, "link_row.html", links[i])
-            }
-            return
-        }
-
-        // Search only in alias and url
-        var links []models.Link
-        searchQuery := "%" + query + "%"
-        db.Where("alias LIKE ? OR url LIKE ?", searchQuery, searchQuery).
-            Order("created_at desc").
-            Find(&links)
-
-        // Use the same template as the main list
-        for i := range links {
-            c.HTML(http.StatusOK, "link_row.html", links[i])
-        }
-    }
+func (h *AppHandler) SearchLinks() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		query := c.Query("q")
+		if query == "" {
+			ls, e := h.LinkService.ListLinks()
+			if e != nil {
+				c.Status(http.StatusInternalServerError)
+				return
+			}
+			for i := range ls {
+				c.HTML(http.StatusOK, "link_row.html", ls[i])
+			}
+			return
+		}
+		ls, e := h.LinkService.SearchLinks(query)
+		if e != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+		for i := range ls {
+			c.HTML(http.StatusOK, "link_row.html", ls[i])
+		}
+	}
 }

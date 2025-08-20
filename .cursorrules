@@ -2,109 +2,115 @@
 
 ## Commit messages
 
-A good commit message following the Conventional Commits specification should have this structure:
+Use Conventional Commits; keep subjects short and actionable.
 
 ```
-<type>[optional scope]: <description>
+<type>(optional-scope)!: short imperative summary
 
-[optional body]
+[body]
 
-[optional footer(s)]
+[footer]
 ```
 
-### Required Elements
+- Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `ci`, `build`, `revert`
+- Scope: concise area in parentheses (e.g., `api`, `auth`, `ui`)
+- Summary: imperative, lower-case start, no trailing period, ~50 chars
+- Breaking: add `!` after type/scope and a `BREAKING CHANGE:` footer
+- Issues: reference in footer (e.g., `Closes #123`)
 
-#### Type
-Must be one of these standard types:
-
-| Type | Description |
-|------|-------------|
-| `feat` | A new feature for the user |
-| `fix` | A bug fix |
-| `docs` | Documentation only changes |
-| `style` | Changes that don't affect code meaning (white-space, formatting, etc.) |
-| `refactor` | Code change that neither fixes a bug nor adds a feature |
-| `perf` | A code change that improves performance |
-| `test` | Adding missing tests or correcting existing tests |
-| `chore` | Changes to the build process or auxiliary tools |
-| `ci` | Changes to CI configuration files and scripts |
-| `build` | Changes that affect the build system or external dependencies |
-| `revert` | Reverts a previous commit |
-DO NOT FORGET THE TYPE
-#### Description
-A short summary of the code change:
-- Use imperative mood ("add" not "added" or "adds")
-- Don't capitalize the first letter
-- No period at the end
-- Keep it under 50 characters when possible
-
-### Optional Elements
-
-#### Scope
-Provides context about what part of the codebase is affected:
-- Use parentheses: `feat(auth): add login validation`
-- Common scopes: component names, file names, or feature areas
-DO NOT FORGET THE SCOPE
-### Body
-Detailed explanation when the subject line isn't sufficient:
-- Separate from subject with a blank line
-- Wrap at 72 characters
-- Explain what and why, not how
-- Can include multiple paragraphs
-
-#### Footer
-Used for breaking changes and issue references:
-- `BREAKING CHANGE:` describes incompatible API changes
-- `Closes #123` or `Fixes #456` to reference issues
-
-### Examples
-
-#### Simple feature
+Examples:
 ```
-feat: add user authentication
+feat(auth): add login validation
+fix(api): handle 504 gateway timeout
+feat(api)!: change user response shape
+
+BREAKING CHANGE: endpoint returns a nested object.
 ```
 
-#### With scope
-```
-fix(api): resolve timeout issue in user service
-```
+## Engineering principles (SOLID)
 
-#### With body
-```
-feat(auth): implement OAuth2 integration
+Adopt SOLID as default design guidance. Prefer simple code first; increase abstraction only when the need becomes clear.
 
-Add support for Google and GitHub OAuth providers.
-This allows users to sign in with their existing accounts
-instead of creating new credentials.
-```
+- **Single Responsibility (S)**: a module/class/function has one reason to change.
+  - Do: keep functions small and focused; extract concerns (validation, mapping, IO).
+  - Avoid: multi-purpose classes, optional behaviors toggled via flags.
 
-#### Breaking change
-```
-feat(api)!: change user endpoint response format
+- **Open/Closed (O)**: open for extension, closed for modification.
+  - Do: depend on interfaces, use composition, strategy/policy objects.
+  - Avoid: switch/case by type that grows every time we add a new variant.
 
-BREAKING CHANGE: The user endpoint now returns a nested object
-instead of a flat structure. Update your API calls accordingly.
+- **Liskov Substitution (L)**: subtypes must be usable wherever base types are expected.
+  - Do: preserve invariants and contracts; avoid strengthening preconditions.
+  - Avoid: throwing on valid base behavior or returning broader/looser results.
 
-Before: { "name": "John", "email": "john@example.com" }
-After: { "user": { "name": "John", "email": "john@example.com" } }
-```
+- **Interface Segregation (I)**: prefer small, client-specific interfaces.
+  - Do: split fat interfaces; pass only what is needed.
+  - Avoid: god-interfaces that force unused methods.
 
-### Best Practices
+- **Dependency Inversion (D)**: depend on abstractions, not concretions.
+  - Do: inject dependencies; isolate side-effects at boundaries.
+  - Avoid: directly new-up infrastructure inside domain logic.
 
-- ✅ Keep the first line under 50 characters
-- ✅ Use present tense, imperative mood
-- ✅ Don't end the subject line with a period
-- ✅ Separate subject from body with a blank line
-- ✅ Focus on why the change was made, not how
-- ✅ Reference issues and breaking changes in footers
-- ✅ Use `!` after type/scope to indicate breaking changes
-- ✅ Be consistent with your team's conventions
+Checklist before merging:
+- Each unit has one clear purpose and name conveys it
+- No concrete infrastructure leaked into domain modules
+- New behavior added via composition/polymorphism instead of editing many conditionals
+- Interfaces are narrow; no unused methods
 
-### Benefits
+## Clean code & craftsmanship
 
-Following Conventional Commits helps with:
-- **Automated tooling** - Tools can parse and process commits automatically
-- **Changelog generation** - Generate release notes from commit history
-- **Semantic versioning** - Automatically determine version bumps
-- **Team communication** - Clear understanding of change impact and purpose
-- **Code review** - Easier to understand what changed and why
+- **Naming**: prefer full words; reflect domain language; avoid abbreviations.
+- **Functions**: small, do one thing; avoid boolean flags; prefer early returns.
+- **Classes/Modules**: keep public API minimal; hide internals; avoid cyclic deps.
+- **Immutability**: prefer immutable data; avoid shared mutable state.
+- **Error handling**:
+  - Use explicit error types/Result objects where idiomatic; avoid silent failures
+  - Fail fast with clear messages, include actionable context (not secrets)
+- **Null/undefined**: avoid returning null; prefer Option/Maybe or explicit errors.
+- **Side-effects**: keep at edges; pure core where feasible.
+- **Comments**: explain why, not what; remove outdated comments; no TODO—implement or ticket.
+- **Formatting**: use project formatter/linters; no unrelated reformatting in PRs.
+
+## Architecture & boundaries
+
+- **Layers**: domain (pure), application/use-cases (orchestrate), infrastructure (IO, frameworks).
+- **Boundaries**: domain does not import infrastructure; define ports/interfaces in domain.
+- **Dependency rules**: inward pointing; outer layers depend on inner, not vice versa.
+- **DTOs/Mappers**: isolate transport shapes from domain models; map at boundaries.
+- **Configuration**: inject via environment/config objects; avoid global singletons.
+- **Concurrency**: encapsulate async/parallelism; avoid leaking primitives across layers.
+
+Recommended structure (adapt as needed):
+- `domain/` entities, value-objects, domain services, ports
+- `application/` use-cases, command/query handlers, orchestrations
+- `infrastructure/` db/http/fs/adapters, frameworks, DI wiring
+- `interfaces/` (optional) REST/GraphQL/CLI controllers, validation
+
+
+## Security & privacy
+
+- Never log secrets, tokens, or personal data; scrub or hash identifiers.
+- Validate and sanitize all external input at boundaries; use allow-lists.
+- Principle of least privilege for creds/permissions; rotate secrets.
+- Pin dependencies; address known CVEs promptly; avoid unmaintained libs.
+- Use HTTPS/TLS; verify certificates; sign webhooks; enable CSRF protection where relevant.
+
+## Performance & reliability
+
+- Set budgets for latency and memory in hot paths; measure before and after.
+- Avoid N+1 queries; use indexes; prefer streaming/iteration for large datasets.
+- Add timeouts, retries with backoff, and idempotency keys for external calls.
+- Use caching thoughtfully; define invalidation strategy; bound cache size/TTL.
+- Guard against unbounded concurrency; use queues or rate limits where needed.
+
+
+## Conventional Commit aide-memoire
+
+When in doubt, prefer these mappings:
+- `feat(scope):` user-visible behavior or API additions
+- `fix(scope):` bug fixes with tests
+- `refactor(scope):` internal restructuring without behavior change
+- `perf(scope):` measurable performance improvements
+- `docs(scope):` docs only
+- `test(scope):` tests only
+- `build|ci|chore(scope):` tooling and build changes
