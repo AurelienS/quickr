@@ -3,28 +3,25 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 	"quickr/models"
 )
 
 // HandleHome renders the homepage with all links
-func HandleHome(db *gorm.DB) gin.HandlerFunc {
+func (h *AppHandler) HandleHome() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var links []models.Link
-		result := db.Order("created_at desc").Find(&links)
-		if result.Error != nil {
-			log.Printf("Database error: %v", result.Error)
-			c.String(http.StatusInternalServerError, "Database error")
+		links, err := h.LinkService.ListLinks()
+		if err != nil {
+			log.Printf("Service error: %v", err)
+			c.String(http.StatusInternalServerError, "Service error")
 			return
 		}
-
 		emailVal, _ := c.Get("userEmail")
 		roleVal, _ := c.Get("userRole")
 		isAdmin := roleVal == "admin"
-
 		log.Printf("Found %d links", len(links))
 		c.HTML(http.StatusOK, "index.html", gin.H{
 			"title":     "Home",
@@ -37,33 +34,26 @@ func HandleHome(db *gorm.DB) gin.HandlerFunc {
 }
 
 // HandleStats renders the stats page
-func HandleStats(db *gorm.DB) gin.HandlerFunc {
+func (h *AppHandler) HandleStats() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Get total links
-		var totalLinks int64
-		db.Model(&models.Link{}).Count(&totalLinks)
-
-		// Get total clicks
+		links, _ := h.LinkService.ListLinks()
+		var totalLinks int64 = int64(len(links))
 		var totalClicks int64
-		db.Model(&models.Link{}).Select("COALESCE(SUM(clicks), 0)").Row().Scan(&totalClicks)
-
-		// Get unique creators count
-		var activeUsers int64
-		db.Model(&models.Link{}).Distinct("creator_name").Count(&activeUsers)
-
-		// Get top 5 links by clicks
-		var topLinks []models.Link
-		db.Order("clicks desc").Limit(5).Find(&topLinks)
-
-		// Get 5 most recent links
-		var recentLinks []models.Link
-		db.Order("created_at desc").Limit(5).Find(&recentLinks)
-
+		creators := map[string]struct{}{}
+		for _, l := range links {
+			totalClicks += int64(l.Clicks)
+			creators[l.CreatorName] = struct{}{}
+		}
+		activeUsers := int64(len(creators))
+		topLinks := append([]models.Link(nil), links...)
+		sort.Slice(topLinks, func(i, j int) bool { return topLinks[i].Clicks > topLinks[j].Clicks })
+		if len(topLinks) > 5 { topLinks = topLinks[:5] }
+		recentLinks := append([]models.Link(nil), links...)
+		sort.Slice(recentLinks, func(i, j int) bool { return recentLinks[i].CreatedAt.After(recentLinks[j].CreatedAt) })
+		if len(recentLinks) > 5 { recentLinks = recentLinks[:5] }
 		emailVal, _ := c.Get("userEmail")
 		roleVal, _ := c.Get("userRole")
 		isAdmin := roleVal == "admin"
-
-		log.Printf("Stats: %d links, %d clicks, %d users", totalLinks, totalClicks, activeUsers)
 		c.HTML(http.StatusOK, "stats.html", gin.H{
 			"title":       "Statistics",
 			"active":      "stats",
@@ -79,46 +69,39 @@ func HandleStats(db *gorm.DB) gin.HandlerFunc {
 }
 
 // GET /hot
-func HandleHot(db *gorm.DB) gin.HandlerFunc {
-    return func(c *gin.Context) {
-        // Get recently added links (last 24h)
-        var recent []models.Link
-        db.Where("created_at > ?", time.Now().Add(-24*time.Hour)).
-            Order("created_at desc").
-            Find(&recent)
-
-        // Get top links for last 7 days
-        var top7d []models.Link
-        db.Where("created_at > ?", time.Now().Add(-7*24*time.Hour)).
-            Order("clicks desc").
-            Limit(20).
-            Find(&top7d)
-
-        // Get top links for last 30 days
-        var top30d []models.Link
-        db.Where("created_at > ?", time.Now().Add(-30*24*time.Hour)).
-            Order("clicks desc").
-            Limit(20).
-            Find(&top30d)
-
-        // Get top links all time
-        var topAll []models.Link
-        db.Order("clicks desc").
-            Limit(20).
-            Find(&topAll)
-
-        emailVal, _ := c.Get("userEmail")
-        roleVal, _ := c.Get("userRole")
-        isAdmin := roleVal == "admin"
-
-        c.HTML(http.StatusOK, "hot.html", gin.H{
-            "active":   "hot",
-            "recent":   recent,
-            "top7d":    top7d,
-            "top30d":   top30d,
-            "topAll":   topAll,
-            "userEmail": emailVal,
-            "isAdmin":   isAdmin,
-        })
-    }
+func (h *AppHandler) HandleHot() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		links, _ := h.LinkService.ListLinks()
+		var recent []models.Link
+		var top7d []models.Link
+		var top30d []models.Link
+		var topAll []models.Link
+		cut24 := time.Now().Add(-24 * time.Hour)
+		cut7d := time.Now().Add(-7 * 24 * time.Hour)
+		cut30d := time.Now().Add(-30 * 24 * time.Hour)
+		for _, l := range links {
+			if l.CreatedAt.After(cut24) { recent = append(recent, l) }
+			if l.CreatedAt.After(cut7d) { top7d = append(top7d, l) }
+			if l.CreatedAt.After(cut30d) { top30d = append(top30d, l) }
+		}
+		sort.Slice(top7d, func(i, j int) bool { return top7d[i].Clicks > top7d[j].Clicks })
+		if len(top7d) > 20 { top7d = top7d[:20] }
+		sort.Slice(top30d, func(i, j int) bool { return top30d[i].Clicks > top30d[j].Clicks })
+		if len(top30d) > 20 { top30d = top30d[:20] }
+		topAll = append([]models.Link(nil), links...)
+		sort.Slice(topAll, func(i, j int) bool { return topAll[i].Clicks > topAll[j].Clicks })
+		if len(topAll) > 20 { topAll = topAll[:20] }
+		emailVal, _ := c.Get("userEmail")
+		roleVal, _ := c.Get("userRole")
+		isAdmin := roleVal == "admin"
+		c.HTML(http.StatusOK, "hot.html", gin.H{
+			"active":    "hot",
+			"recent":    recent,
+			"top7d":     top7d,
+			"top30d":    top30d,
+			"topAll":    topAll,
+			"userEmail": emailVal,
+			"isAdmin":   isAdmin,
+		})
+	}
 }
