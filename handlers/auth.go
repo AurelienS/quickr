@@ -39,6 +39,15 @@ func getAdminEmail() string {
 	return a
 }
 
+func getAdminName() string {
+	n := os.Getenv("ADMIN_NAME")
+	if n == "" {
+		log.Println("Config warning: missing env ADMIN_NAME; defaulting to 'Admin'")
+		return "Admin"
+	}
+	return n
+}
+
 // RequireAuth middleware validates the JWT session cookie and ensures the user is not disabled
 func (h *AppHandler) RequireAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
