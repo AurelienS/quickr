@@ -175,6 +175,9 @@ func registerRoutes(r *gin.Engine, h *handlers.AppHandler) {
 	{
 		api.GET("/links", h.ListLinks())
 		api.POST("/links", h.CreateLink())
+		api.GET("/links/modal/create", h.GetCreateLinkModal())
+		api.GET("/links/:id/modal/edit", h.GetLinkEditModal())
+		api.GET("/links/:id/modal/delete", h.GetLinkDeleteModal())
 		api.GET("/links/:id/edit", h.GetLinkEditField())
 		api.PUT("/links/:id", h.UpdateLink())
 		api.DELETE("/links/:id", h.DeleteLink())

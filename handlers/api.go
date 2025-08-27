@@ -98,6 +98,39 @@ func (h *AppHandler) CreateLink() gin.HandlerFunc {
 	}
 }
 
+// GET /api/links/modal/create
+func (h *AppHandler) GetCreateLinkModal() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.HTML(http.StatusOK, "modal_create_link.html", nil)
+	}
+}
+
+// GET /api/links/:id/modal/edit
+func (h *AppHandler) GetLinkEditModal() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		link, err := h.LinkService.GetLinkByID(id)
+		if err != nil {
+			c.String(http.StatusNotFound, "Link not found")
+			return
+		}
+		c.HTML(http.StatusOK, "modal_edit_link.html", link)
+	}
+}
+
+// GET /api/links/:id/modal/delete
+func (h *AppHandler) GetLinkDeleteModal() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		link, err := h.LinkService.GetLinkByID(id)
+		if err != nil {
+			c.String(http.StatusNotFound, "Link not found")
+			return
+		}
+		c.HTML(http.StatusOK, "modal_delete_link.html", link)
+	}
+}
+
 // GET /api/links/:id/edit
 func (h *AppHandler) GetLinkEditField() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -164,9 +197,11 @@ func (h *AppHandler) UpdateLink() gin.HandlerFunc {
 			return
 		}
 
-		// Return the updated cell HTML
+		// Return updated HTML for HTMX
 		if c.GetHeader("HX-Request") == "true" {
-			if newAlias != "" {
+			if newAlias != "" && newURL != "" {
+				c.HTML(http.StatusOK, "link_row.html", updated)
+			} else if newAlias != "" {
 				c.HTML(http.StatusOK, "link_cell.html", gin.H{
 					"id":    updated.ID,
 					"field": "alias",
@@ -179,6 +214,8 @@ func (h *AppHandler) UpdateLink() gin.HandlerFunc {
 					"value": updated.URL,
 					"alias": updated.Alias,
 				})
+			} else {
+				c.HTML(http.StatusOK, "link_row.html", updated)
 			}
 			return
 		}
