@@ -35,6 +35,12 @@ func (h *AppHandler) CreateLink() gin.HandlerFunc {
 		// Get current user email from context
 		emailVal, _ := c.Get("userEmail")
 		creatorEmail, _ := emailVal.(string)
+		roleVal, _ := c.Get("userRole")
+		role, _ := roleVal.(string)
+		creatorDisplay := creatorEmail
+		if role == "admin" {
+			creatorDisplay = getAdminName()
+		}
 
 		// Check if it's an HTMX request
 		if c.GetHeader("HX-Request") == "true" {
@@ -47,7 +53,7 @@ func (h *AppHandler) CreateLink() gin.HandlerFunc {
 				return
 			}
 
-			link, err := h.LinkService.CreateLink(alias, url, creatorEmail)
+			link, err := h.LinkService.CreateLink(alias, url, creatorDisplay)
 			if err != nil {
 				switch {
 				case errors.Is(err, services.ErrAliasReserved):
@@ -73,7 +79,7 @@ func (h *AppHandler) CreateLink() gin.HandlerFunc {
 			return
 		}
 
-		link, err := h.LinkService.CreateLink(req.Alias, req.URL, creatorEmail)
+		link, err := h.LinkService.CreateLink(req.Alias, req.URL, creatorDisplay)
 		if err != nil {
 			switch {
 			case errors.Is(err, services.ErrAliasReserved):
@@ -132,10 +138,16 @@ func (h *AppHandler) UpdateLink() gin.HandlerFunc {
 		// Determine editor
 		emailVal, _ := c.Get("userEmail")
 		editorEmail, _ := emailVal.(string)
+		roleVal, _ := c.Get("userRole")
+		role, _ := roleVal.(string)
+		editorDisplay := editorEmail
+		if role == "admin" {
+			editorDisplay = getAdminName()
+		}
 
 		newAlias := c.PostForm("alias")
 		newURL := c.PostForm("url")
-		updated, err := h.LinkService.UpdateLink(id, newAlias, newURL, editorEmail)
+		updated, err := h.LinkService.UpdateLink(id, newAlias, newURL, editorDisplay)
 		if err != nil {
 			switch {
 			case errors.Is(err, services.ErrAliasReserved):
